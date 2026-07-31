@@ -1,0 +1,254 @@
+.unit-ledger-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7f5f0;
+  padding-bottom: 90px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.unit-ledger-content {
+  padding: 16px;
+  flex: 1;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #b30000;
+  cursor: pointer;
+  margin-right: 12px;
+  padding: 0;
+}
+
+.form-header h2 {
+  font-size: 20px;
+  color: #b30000;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Summary Section */
+.ledger-summary-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  border: 1px solid #eee;
+}
+
+.ledger-summary-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.summary-title-tab {
+  background-color: #b30000;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.year-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f0f0;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.year-dropdown .arrow {
+  font-size: 10px;
+}
+
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.summary-card {
+  background: #fdfdfd;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.card-label {
+  font-size: 11px;
+  color: #777;
+}
+
+.summary-card h3 {
+  font-size: 13px;
+  color: #222;
+
+}
+
+.status-green {
+  color: #008037;
+  font-size: 11px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.status-red {
+  color: #b30000;
+  font-size: 11px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Ledger Transactions Section */
+.ledger-transactions-section {
+  margin-bottom: 20px;
+}
+
+.section-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.section-header-bar h3 {
+  font-size: 15px;
+  color: #b30000;
+  margin: 0;
+  font-weight: 600;
+}
+
+.ledger-table-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.ledger-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 12px;
+  color: #333;
+}
+
+.ledger-row:last-child {
+  border-bottom: none;
+}
+
+.ledger-item-title {
+  flex: 1.8;
+  font-weight: 500;
+}
+
+.ledger-item-amount {
+  flex: 1;
+  color: #444;
+}
+
+.ledger-item-date {
+  flex: 1;
+  color: #666;
+}
+
+.ledger-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-eye-btn,
+.action-download-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+/* Action Buttons */
+.ledger-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.download-ledger-btn {
+  width: 100%;
+  background-color: #8c8c8c;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.download-ledger-btn:hover {
+  background-color: #737373;
+}
+
+.record-payment-btn {
+  width: 100%;
+  background-color: #b30000;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(179, 0, 0, 0.2);
+  transition: background-color 0.2s;
+}
+
+.record-payment-btn:hover {
+  background-color: #990000;
+}
+
+.send-ledger-btn {
+  width: 100%;
+  background-color: #008037;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(0, 128, 55, 0.2);
+  transition: background-color 0.2s;
+}
+
+.send-ledger-btn:hover {
+  background-color: #00662d;
+}
+
+.whatsapp-icon {
+  font-size: 16px;
+}

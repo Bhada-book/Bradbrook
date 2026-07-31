@@ -1,8 +1,10 @@
-import React from 'react';
+import React,{useState} from 'react';
 import './TenantInformation.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
+import SideMenuDrawer from './SideMenuDrawer';
 
-export default function TenantInformation( onBack, onNavigate) {
+export default function TenantInformation({ onBack, onNavigate}) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <div className="tenant-container">
       {/* --- TOP NAVBAR --- */}
@@ -18,16 +20,26 @@ export default function TenantInformation( onBack, onNavigate) {
           <button className="icon-btn notification-btn" aria-label="Notifications">
             <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
           </button>
-          <button className="icon-btn menu-btn" aria-label="Menu">
+        <button 
+            className="icon-btn menu-btn" 
+            aria-label="Menu"
+            onClick={() => setIsMenuOpen(true)}
+          >
             ☰
           </button>
         </div>
       </header>
+       <SideMenuDrawer 
+                                isOpen={isMenuOpen} 
+                                onClose={() => setIsMenuOpen(false)} 
+                                onNavigate={onNavigate} 
+                              />
+                  
 
       {/* --- MAIN CONTENT AREA --- */}
       <main className="tenant-content">
         <div className="form-header">
-       <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
+    <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>Tenant Information</h2>
         </div>
 
@@ -98,7 +110,7 @@ export default function TenantInformation( onBack, onNavigate) {
           <div className="form-group upload-row-group">
             <input type="text" placeholder="Document  (Adhaar/Pan/DL)" readOnly />
             <button type="button" className="upload-inline-btn" aria-label="Upload Document">
-              📤
+         <img src="images/Group5.png" style={{height:"20px"}}></img>
             </button>
           </div>
 
@@ -148,7 +160,7 @@ export default function TenantInformation( onBack, onNavigate) {
           <div className="form-group upload-row-group">
             <input type="text" placeholder="Agreement Copy  (PDF/JPG)" readOnly />
             <button type="button" className="upload-inline-btn" aria-label="Upload Agreement">
-              📤
+             <img src="images/Group5.png" style={{height:"20px"}}></img>
             </button>
           </div>
 
@@ -164,10 +176,10 @@ export default function TenantInformation( onBack, onNavigate) {
           <div className="photo-section-card">
             <label className="photo-label">Handover Property Photos</label>
             <div className="photo-grid">
-              {[1, 2, 3, 4].map((_, index) => (
+              {[1].map((_, index) => (
                 <div className="photo-upload-box" key={index}>
                   <button type="button" className="upload-icon-btn" aria-label="Upload Photo">
-                    📤
+                    <img src="/images/Group.png"></img>
                   </button>
                 </div>
               ))}

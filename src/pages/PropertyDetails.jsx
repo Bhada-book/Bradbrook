@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import './PropertyDetails.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
+import SideMenuDrawer from './SideMenuDrawer';
 
 export default function PropertyDetails({ onBack, onNavigate }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const togglePopup = () => {
     setIsPopupOpen(!isPopupOpen);
@@ -31,11 +33,21 @@ export default function PropertyDetails({ onBack, onNavigate }) {
           <button className="icon-btn notification-btn" aria-label="Notifications">
             <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
           </button>
-          <button className="icon-btn menu-btn" aria-label="Menu">
+          <button 
+            className="icon-btn menu-btn" 
+            aria-label="Menu"
+            onClick={() => setIsMenuOpen(true)}
+          >
             ☰
           </button>
         </div>
       </header>
+       <SideMenuDrawer 
+                    isOpen={isMenuOpen} 
+                    onClose={() => setIsMenuOpen(false)} 
+                    onNavigate={onNavigate} 
+                  />
+      
 
       {/* --- MAIN CONTENT AREA --- */}
       <main className="property-content">
@@ -96,10 +108,10 @@ export default function PropertyDetails({ onBack, onNavigate }) {
           <div className="photo-section-card">
             <label className="photo-label">Property Photo</label>
             <div className="photo-grid">
-              {[1, 2, 3, 4].map((_, index) => (
+              {[1 ].map((_, index) => (
                 <div className="photo-upload-box" key={index}>
                   <button type="button" className="upload-icon-btn" aria-label="Upload Photo">
-                    📤
+                  <img src="/images/Group.png"></img>
                   </button>
                 </div>
               ))}

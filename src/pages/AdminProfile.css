@@ -1,0 +1,119 @@
+.admin-profile-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7f5f0;
+  padding-bottom: 90px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-profile-content {
+  padding: 16px;
+  flex: 1;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #b30000;
+  cursor: pointer;
+  margin-right: 12px;
+  padding: 0;
+}
+
+.form-header h2 {
+  font-size: 20px;
+  color: #b30000;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Profile Card */
+.admin-profile-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  border: 1px solid #eee;
+}
+
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.landlord-tag {
+  font-size: 11px;
+  color: #b30000;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.admin-card-header h3 {
+  font-size: 16px;
+  color: #222;
+  margin: 0;
+  font-weight: 600;
+}
+
+.admin-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-edit-btn,
+.action-delete-btn {
+  background: none;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.admin-details-body p {
+  font-size: 13px;
+  color: #555;
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+/* Action Buttons */
+.admin-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.add-landlord-btn,
+.add-manager-btn,
+.add-collector-btn {
+  width: 100%;
+  background-color: #b30000;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(179, 0, 0, 0.2);
+  transition: background-color 0.2s;
+}
+
+.add-landlord-btn:hover,
+.add-manager-btn:hover,
+.add-collector-btn:hover {
+  background-color: #990000;
+}

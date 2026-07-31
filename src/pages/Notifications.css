@@ -1,0 +1,122 @@
+.notifications-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7f5f0;
+  padding-bottom: 90px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.notifications-content {
+  padding: 16px;
+  flex: 1;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #b30000;
+  cursor: pointer;
+  margin-right: 12px;
+  padding: 0;
+}
+
+.form-header h2 {
+  font-size: 20px;
+  color: #b30000;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Notifications Table Card */
+.notifications-table-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.notification-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #333;
+}
+
+.notification-row:last-child {
+  border-bottom: none;
+}
+
+.notif-date {
+  color: #666;
+  flex: 1;
+  font-size: 12px;
+}
+
+.notif-title {
+  flex: 1.5;
+  font-weight: 500;
+  color: #222;
+}
+
+.notif-mode {
+  flex: 1;
+  color: #555;
+}
+
+.notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1.2;
+  justify-content: flex-end;
+}
+
+.action-eye-btn {
+  background: none;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  min-width: 75px;
+}
+
+.status-approved {
+  background-color: #008037;
+  color: #ffffff;
+}
+
+.status-pending {
+  background-color: #ffc107;
+  color: #000000;
+}
+
+.status-rejected {
+  background-color: #b30000;
+  color: #ffffff;
+}
+
+.status-received {
+  background-color: #008037;
+  color: #ffffff;
+}

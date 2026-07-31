@@ -1,8 +1,10 @@
 import React from 'react';
 import './BuildingDetails.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
-
+import SideMenuDrawer from './SideMenuDrawer';
+import { useState } from 'react';
 export default function BuildingDetails({ onBack ,onNavigate }) {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <div className="building-container">
       {/* --- TOP NAVBAR --- */}
@@ -18,11 +20,20 @@ export default function BuildingDetails({ onBack ,onNavigate }) {
           <button className="icon-btn notification-btn" aria-label="Notifications">
             <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
           </button>
-          <button className="icon-btn menu-btn" aria-label="Menu">
+         <button 
+            className="icon-btn menu-btn" 
+            aria-label="Menu"
+            onClick={() => setIsMenuOpen(true)}
+          >
             ☰
           </button>
         </div>
       </header>
+      <SideMenuDrawer 
+              isOpen={isMenuOpen} 
+              onClose={() => setIsMenuOpen(false)} 
+              onNavigate={onNavigate} 
+            />
 
       {/* --- MAIN CONTENT AREA --- */}
       <main className="building-content">

@@ -1,0 +1,166 @@
+.tenant-list-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7f5f0;
+  padding-bottom: 90px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tenant-list-content {
+  padding: 16px;
+  flex: 1;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #b30000;
+  cursor: pointer;
+  margin-right: 12px;
+  padding: 0;
+}
+
+.form-header h2 {
+  font-size: 20px;
+  color: #b30000;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Table Card */
+.tenant-table-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid #eee;
+}
+
+.table-header-row {
+  display: flex;
+  background-color: #fafafa;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.table-data-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #333;
+}
+
+.table-data-row:last-child {
+  border-bottom: none;
+}
+
+.col-name {
+  flex: 1.5;
+  font-weight: 500;
+}
+
+.col-unit {
+  flex: 1;
+}
+
+.col-since {
+  flex: 1.2;
+}
+
+.col-actions {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.action-eye-btn,
+.action-edit-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+/* Action Buttons */
+.tenant-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.add-tenant-btn {
+  width: 100%;
+  background-color: #b30000;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(179, 0, 0, 0.2);
+  transition: background-color 0.2s;
+}
+
+.add-tenant-btn:hover {
+  background-color: #990000;
+}
+
+.download-tenant-btn {
+  width: 100%;
+  background-color: #8c8c8c;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.download-tenant-btn:hover {
+  background-color: #737373;
+}
+
+.send-tenant-btn {
+  width: 100%;
+  background-color: #008037;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(0, 128, 55, 0.2);
+  transition: background-color 0.2s;
+}
+
+.send-tenant-btn:hover {
+  background-color: #00662d;
+}
+
+.whatsapp-icon {
+  font-size: 16px;
+}

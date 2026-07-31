@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import './Home.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
+import SideMenuDrawer from './SideMenuDrawer';
 
 export default function PropertyDetails({ onBack, onNavigate }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const togglePopup = () => {
     setIsPopupOpen(!isPopupOpen);
@@ -12,7 +14,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
   const handleSelectOption = (pageName) => {
     setIsPopupOpen(false);
     if (onNavigate) {
-      onNavigate(pageName); // 'building', 'property', किंवा 'tenant' पाठवेल
+      onNavigate(pageName); 
     }
   };
   return (
@@ -24,18 +26,30 @@ export default function PropertyDetails({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications">
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
-          <button className="icon-btn menu-btn" aria-label="Menu">
+         <button 
+  className="icon-btn notification-btn" 
+  aria-label="Notifications"
+  onClick={() => onNavigate('notifications')}
+>
+  <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+</button>
+        <button 
+            className="icon-btn menu-btn" 
+            aria-label="Menu"
+            onClick={() => setIsMenuOpen(true)}
+          >
             ☰
           </button>
         </div>
       </header>
-
+<SideMenuDrawer 
+        isOpen={isMenuOpen} 
+        onClose={() => setIsMenuOpen(false)} 
+        onNavigate={onNavigate} 
+      />
       {/* --- MAIN CONTENT SCROLLABLE AREA --- */}
       <main className="home-content">
         
@@ -74,7 +88,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
 
         {/* UNITS SECTION (Occupied/Active) */}
         <section className="units-section">
-          <div className="section-header-bar">
+          <div className="section-header-bar1">
             <h3>UNITS</h3>
             <div className="filters-row">
               <div className="mini-dropdown">Property <span>▼</span></div>
@@ -190,12 +204,13 @@ export default function PropertyDetails({ onBack, onNavigate }) {
 
         {/* VACANT UNITS SECTION */}
         <section className="units-section vacant-section">
-          <div className="section-header-bar">
+          <div className="section-header-bar1">
             <h3>VACANT UNITS</h3>
             <div className="filters-row">
               <div className="mini-dropdown">Property <span>▼</span></div>
             </div>
           </div>
+          <hr></hr>
 
           <div className="unit-cards-grid">
             {[1, 2, 3, 4, 5, 6].map((item, index) => (
