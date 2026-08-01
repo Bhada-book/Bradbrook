@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f7f5f0;
+  background-image: url("/images/back.png");
   padding-bottom: 90px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -12,11 +12,6 @@
   flex: 1;
 }
 
-.form-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
 
 .back-btn {
   background: none;
@@ -28,16 +23,11 @@
   padding: 0;
 }
 
-.form-header h2 {
-  font-size: 20px;
-  color: #b30000;
-  margin: 0;
-  font-weight: 600;
-}
+
 
 /* Table Card */
 .tenant-table-card {
-  background: #ffffff;
+
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -47,12 +37,12 @@
 
 .table-header-row {
   display: flex;
-  background-color: #fafafa;
+  text-align: left;
   padding: 12px 14px;
   border-bottom: 1px solid #eee;
   font-size: 13px;
   font-weight: 600;
-  color: #666;
+  color: #080808;
 }
 
 .table-data-row {
@@ -71,6 +61,7 @@
 .col-name {
   flex: 1.5;
   font-weight: 500;
+  text-align: left;
 }
 
 .col-unit {
@@ -110,7 +101,7 @@
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
@@ -128,7 +119,7 @@
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
@@ -145,7 +136,7 @@
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;

@@ -41,38 +41,7 @@
   gap: 8px;
 }
 
-.search-box {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 223, 119, 0.4);
-  border-radius: 20px;
-  padding: 5px 12px;
-  display: flex;
-  align-items: center;
-  width: 150px;
-  transition: width 0.3s;
-}
 
-.search-box:focus-within {
-  width: 170px;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.search-icon {
-  font-size: 12px;
-}
-
-.search-box input {
-  border: none;
-  background: transparent;
-  outline: none;
-  color: #fff;
-  font-size: 13px;
-  width: 100%;
-}
-
-.search-box input::placeholder {
-  color: #ffdf77;
-}
 
 .icon-btn {
   background: transparent;
@@ -100,11 +69,7 @@
   gap: 15px;
 }
 
-.form-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+
 
 .back-btn {
   background: transparent;
@@ -118,23 +83,21 @@
   justify-content: center;
 }
 
-.form-header h2 {
-  font-size: 18px;
-  color: #a30d12;
-  font-weight: bold;
-  margin: 0;
-}
+
 
 .tenant-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  padding-left: 30px;
+  padding-right: 30px;
+font-style: italic;
 }
 
 .section-subtitle {
-  font-size: 12px;
+  font-size: 16px;
   color: #777;
-  margin: 5px 0 0 2px;
+ text-align: left;
 }
 
 .form-group {

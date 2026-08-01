@@ -14,6 +14,10 @@ import UnitLedger from './pages/UnitLedger';
 import TenantProfile from './pages/TenantProfile';
 import Notifications from './pages/Notifications';
 import AdminProfile from './pages/AdminProfile';
+import BottomNavWithPopup from './pages/BottomNavWithPopup';
+import AddManager from './pages/AddManager';
+import AddCollector from './pages/AddCollector';
+import Overdue from './pages/Overdue';
 
 function App() {
   const [currentStep, setCurrentStep] = useState('welcome'); 
@@ -103,6 +107,23 @@ function App() {
   <AdminProfile 
     onBack={() => setCurrentPage('home')} 
     onNavigate={setCurrentPage} 
+  />
+)}
+{currentPage === 'addManager' &&(
+  <AddManager
+  onBack={() => setCurrentPage('home')}
+  onNavigate={setCurrentPage}
+  />
+)}
+{currentPage === 'addCollector' &&(
+  <AddCollector
+  onBack={() => setCurrentPage('home')}
+  onNavigate={setCurrentPage}
+  />
+)}
+{currentPage === 'overdue' && (
+  <Overdue onBack={() => setCurrentPage('home')}
+  onNavigate={setCurrentPage}
   />
 )}
         {/* --- GLOBAL SIDE MENU DRAWER --- */}

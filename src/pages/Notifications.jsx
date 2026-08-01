@@ -22,7 +22,7 @@ export default function Notifications({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
           <button className="icon-btn notification-btn" aria-label="Notifications">
@@ -47,10 +47,11 @@ export default function Notifications({ onBack, onNavigate }) {
 
       {/* --- MAIN CONTENT --- */}
       <main className="notifications-content">
-        <div className="form-header">
+        <div className="form-header" style={{marginBottom:'9px'}}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>Notifications</h2>
         </div>
+     
 
         {/* NOTIFICATIONS LIST CARD */}
         <div className="notifications-table-card">
@@ -60,7 +61,7 @@ export default function Notifications({ onBack, onNavigate }) {
               <span className="notif-title">{item.title}</span>
               <span className="notif-mode">{item.mode}</span>
               <div className="notif-actions">
-                <button className="action-eye-btn" aria-label="View">👁️</button>
+                <button className="action-eye-btn" aria-label="View"><img src='images/eye.png'></img></button>
                 <span className={`status-badge ${item.statusClass}`}>{item.status}</span>
               </div>
             </div>

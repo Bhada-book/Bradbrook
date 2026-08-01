@@ -23,12 +23,16 @@ export default function TenantList({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications">
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
+          <button 
+  className="icon-btn notification-btn" 
+  aria-label="Notifications"
+  onClick={() => onNavigate('notifications')}
+>
+  <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+</button>
           <button 
             className="icon-btn menu-btn" 
             aria-label="Menu"
@@ -48,10 +52,11 @@ export default function TenantList({ onBack, onNavigate }) {
 
       {/* --- MAIN CONTENT --- */}
       <main className="tenant-list-content">
-        <div className="form-header">
+        <div className="form-header" style={{ marginBottom:'9px'}}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>Tenant List</h2>
         </div>
+        <hr></hr>
 
         {/* TENANT TABLE SECTION */}
         <div className="tenant-table-card">
@@ -68,8 +73,8 @@ export default function TenantList({ onBack, onNavigate }) {
               <span className="col-unit">{tenant.unitId}</span>
               <span className="col-since">{tenant.since}</span>
               <div className="col-actions action-btns">
-                <button className="action-eye-btn" aria-label="View">👁️</button>
-                <button className="action-edit-btn" aria-label="Edit">✏️</button>
+                <button className="action-eye-btn" aria-label="View"><img src='images/eye.png'></img></button>
+                <button className="action-edit-btn" aria-label="Edit"><img src='images/edit.png'></img></button>
               </div>
             </div>
           ))}
@@ -80,7 +85,7 @@ export default function TenantList({ onBack, onNavigate }) {
           <button className="add-tenant-btn">Add Tenant</button>
           <button className="download-tenant-btn">Download Tenant List</button>
           <button className="send-tenant-btn">
-            <span className="whatsapp-icon">💬</span> Send Tenant List
+            <span className="whatsapp-icon"><img src='images/whatsup.png' style={{height:'18px'}}></img></span> Send Tenant List
           </button>
         </div>
       </main>

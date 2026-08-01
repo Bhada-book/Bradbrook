@@ -50,6 +50,8 @@
   align-items: center;
   width: 150px;
   transition: width 0.3s;
+  gap:10px
+
 }
 
 .search-box:focus-within {
@@ -59,6 +61,7 @@
 
 .search-icon {
   font-size: 12px;
+  margin-bottom: -10px;
 }
 
 .search-box input {
@@ -248,7 +251,7 @@ border-radius: 5px;
     justify-content:space-between;
     align-items:center;
     padding:0 10px;
-    margin-bottom:6px;
+    margin-bottom:-8px;
 }
 
 .section-header-bar1 h3{
@@ -285,7 +288,7 @@ border-radius: 5px;
 
     border:1px solid #e9e2d9;
     border-radius:10px;
-margin-bottom: -12px;
+
 
     font-size:12px;
     font-weight:500;
@@ -351,7 +354,7 @@ margin-bottom: -12px;
     font-size:8px;
 
     color:#9a9a9a;
-
+    margin-bottom: -4px;
     font-weight:500;
 }
 
@@ -485,7 +488,7 @@ text-align: left;
     color:#7B7B7B;
 
     font-weight:600;
-
+    margin-bottom: -5px;
     white-space:nowrap;
 }
 
@@ -517,7 +520,7 @@ text-align: left;
   right: 0;
   max-width: 480px;
   margin: 0 auto;
- 
+  background-image: url(images/back.png);
   height: 65px;
   display: flex;
   justify-content: space-around;

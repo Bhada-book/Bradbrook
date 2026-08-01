@@ -15,7 +15,7 @@ export default function AdminProfile({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+          <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
           <button 
@@ -44,11 +44,11 @@ export default function AdminProfile({ onBack, onNavigate }) {
 
       {/* --- MAIN CONTENT --- */}
       <main className="admin-profile-content">
-        <div className="form-header">
+        <div className="form-header" style={{ marginBottom:'9px'}}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>Profile</h2>
         </div>
-
+<hr></hr>
         {/* ADMIN PROFILE CARD */}
         <div className="admin-profile-card">
           <div className="admin-card-header">
@@ -56,10 +56,14 @@ export default function AdminProfile({ onBack, onNavigate }) {
               <span className="landlord-tag">Landlord</span>
               <h3>Sandeep Ghige</h3>
             </div>
-            <div className="admin-card-actions">
-              <button className="action-edit-btn" aria-label="Edit Profile">✏️</button>
-              <button className="action-delete-btn" aria-label="Delete Profile">🗑️</button>
-            </div>
+        <div className="admin-card-actions">
+  <button className="action-edit-btn" aria-label="Edit Profile">
+    <img src="images/edit.png" alt="Edit Profile" />
+  </button>
+  <button className="action-delete-btn" aria-label="Delete Profile">
+    <img src="images/delete.png" alt="Delete Profile" />
+  </button>
+</div>
           </div>
 
           <div className="admin-details-body">
@@ -68,7 +72,9 @@ export default function AdminProfile({ onBack, onNavigate }) {
             <p>Akurdi, Pune, Maharashtra</p>
             <p>411035</p>
           </div>
+     
         </div>
+             <hr></hr>
 
         {/* ACTION BUTTONS */}
         <div className="admin-action-buttons">

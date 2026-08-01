@@ -14,12 +14,16 @@ export default function BuildingDetails({ onBack ,onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+          <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications">
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
+         <button 
+  className="icon-btn notification-btn" 
+  aria-label="Notifications"
+  onClick={() => onNavigate('notifications')}
+>
+  <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+</button>
          <button 
             className="icon-btn menu-btn" 
             aria-label="Menu"
@@ -37,7 +41,10 @@ export default function BuildingDetails({ onBack ,onNavigate }) {
 
       {/* --- MAIN CONTENT AREA --- */}
       <main className="building-content">
-        <div className="form-header">
+        <div className="form-header" s    
+        
+        
+          >
 <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>Building or Complex Details</h2>
         </div>

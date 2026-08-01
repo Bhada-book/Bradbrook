@@ -23,12 +23,16 @@ export default function UnitLedger({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications">
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
+          <button 
+  className="icon-btn notification-btn" 
+  aria-label="Notifications"
+  onClick={() => onNavigate('notifications')}
+>
+  <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+</button>
           <button 
             className="icon-btn menu-btn" 
             aria-label="Menu"
@@ -48,11 +52,11 @@ export default function UnitLedger({ onBack, onNavigate }) {
 
       {/* --- MAIN CONTENT --- */}
       <main className="unit-ledger-content">
-        <div className="form-header">
+        <div className="form-header" style={{ marginBottom:'9px'}}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>101 Unit Ledger</h2>
         </div>
-
+<hr></hr>
         {/* COLLECTION SUMMARY CARD */}
         <section className="ledger-summary-section">
           <div className="ledger-summary-top-bar">
@@ -99,8 +103,8 @@ export default function UnitLedger({ onBack, onNavigate }) {
                 <span className="ledger-item-amount">{item.amount}</span>
                 <span className="ledger-item-date">{item.date}</span>
                 <div className="ledger-item-actions">
-                  <button className="action-eye-btn" aria-label="View">👁️</button>
-                  <button className="action-download-btn" aria-label="Download">⬇️</button>
+                  <button className="action-eye-btn" aria-label="View"><img src='images/eye.png'></img></button>
+                  <button className="action-download-btn" aria-label="Download"><img src='images/down.png'></img></button>
                 </div>
               </div>
             ))}
@@ -112,7 +116,7 @@ export default function UnitLedger({ onBack, onNavigate }) {
           <button className="download-ledger-btn">Download</button>
           <button className="record-payment-btn">Record Payment</button>
           <button className="send-ledger-btn">
-            <span className="whatsapp-icon">💬</span> Send Ledger
+            <span className="whatsapp-icon"><img src='images/whatsup.png'></img></span> Send Ledger
           </button>
         </div>
       </main>

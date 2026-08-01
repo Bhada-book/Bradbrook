@@ -22,12 +22,16 @@ export default function TenantHistory({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+         <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications">
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
+           <button 
+  className="icon-btn notification-btn" 
+  aria-label="Notifications"
+  onClick={() => onNavigate('notifications')}
+>
+  <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+</button>
          <button 
             className="icon-btn menu-btn" 
             aria-label="Menu"
@@ -46,7 +50,7 @@ export default function TenantHistory({ onBack, onNavigate }) {
 
       {/* --- MAIN CONTENT --- */}
       <main className="tenant-history-content">
-        <div className="form-header">
+        <div className="form-header" style={{marginBottom:"5px"}}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>101 Unit History</h2>
         </div>
@@ -54,8 +58,8 @@ export default function TenantHistory({ onBack, onNavigate }) {
 
         {/* UNIT INFO CARD */}
         <div className="unit-info-card">
-          <div className="unit-info-top">
-            <span className="bldg-name" style={{textAlign:"left"}}>Building Name</span>
+          <div className="unit-info-top" style={{textAlign:"left" , marginBottom:'-10px'}}>
+            <span className="bldg-name" >Building Name</span>
           </div>
           <div className="unit-info-body">
             <div>
@@ -65,7 +69,7 @@ export default function TenantHistory({ onBack, onNavigate }) {
             <div className="unit-info-badges">
               <span className="status-badge1 overdue1">● Overdue</span>
               <span className="badge-tag1 flat1">Flat</span>
-              <span className="badge-tag occupied"> Tenant ID : 0987654321</span>
+              <span className="badge-tag occupied" style={{fontSize:'9px'}}> Tenant ID : 0987654321</span>
             </div>
           </div>
         
@@ -87,15 +91,15 @@ export default function TenantHistory({ onBack, onNavigate }) {
               <div className="history-item-details">
                 <span className="history-amount">{item.amount}</span>
                 <span className="history-date">{item.date}</span>
-                <button className="action-eye-btn" aria-label="View">👁️</button>
-                <button className="action-download-btn" aria-label="Download">📥</button>
+                <button className="action-eye-btn" aria-label="View"><img src="images/eye.png"></img></button>
+                <button className="action-download-btn" aria-label="Download"><img src="images/down.png"></img></button>
               </div>
             </div>
           ))}
         </div>
 
         {/* RECORD PAYMENT BUTTON */}
-        <button className="record-payment-btn">Record Payment</button>
+        <button className="record-payment-btn1">Record Payment</button>
       </main>
 
       {/* --- BOTTOM NAVIGATION & POPUP --- */}

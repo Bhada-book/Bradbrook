@@ -27,12 +27,16 @@ export default function PropertyDetails({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><img src='images/Vector.png'></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications">
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
+          <button 
+  className="icon-btn notification-btn" 
+  aria-label="Notifications"
+  onClick={() => onNavigate('notifications')}
+>
+  <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+</button>
           <button 
             className="icon-btn menu-btn" 
             aria-label="Menu"
@@ -55,7 +59,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
           <h2>Property or Unit Details</h2>
         </div>
-
+<hr></hr>
         <form className="property-form" onSubmit={(e) => e.preventDefault()}>
           <div className="form-group select-group red-dropdown">
             <select defaultValue="">

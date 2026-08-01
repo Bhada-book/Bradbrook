@@ -12,11 +12,6 @@
   flex: 1;
 }
 
-.form-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 14px;
-}
 
 .back-btn {
   background: none;
@@ -28,30 +23,28 @@
   padding: 0;
 }
 
-.form-header h2 {
-  font-size: 20px;
-  color: #b30000;
-  margin: 0;
-  font-weight: 600;
-}
+
 
 /* Notifications Table Card */
 .notifications-table-card {
-  background: #ffffff;
+  
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
   overflow: hidden;
-  border: 1px solid #eee;
+
 }
 
 .notification-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+ 
   border-bottom: 1px solid #f0f0f0;
-  font-size: 13px;
+  font-size: 11px;
   color: #333;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .notification-row:last-child {
@@ -61,17 +54,18 @@
 .notif-date {
   color: #666;
   flex: 1;
-  font-size: 12px;
+  font-size: 11px;
+  text-align: left;
 }
 
 .notif-title {
-  flex: 1.5;
-  font-weight: 500;
+text-align: left;
   color: #222;
 }
 
 .notif-mode {
   flex: 1;
+  text-align: center;
   color: #555;
 }
 
@@ -102,21 +96,21 @@
 }
 
 .status-approved {
-  background-color: #008037;
+  background-color: #4bad75;
   color: #ffffff;
 }
 
 .status-pending {
-  background-color: #ffc107;
+  background-color: #f5e067;
   color: #000000;
 }
 
 .status-rejected {
-  background-color: #b30000;
+  background-color: #df4c4c;
   color: #ffffff;
 }
 
 .status-received {
-  background-color: #008037;
+  background-color: #2fca72;
   color: #ffffff;
 }

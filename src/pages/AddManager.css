@@ -1,4 +1,4 @@
-.property-container {
+.building-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -7,7 +7,7 @@
 }
 
 /* --- TOP NAVBAR --- */
-.property-navbar {
+.home-navbar {
   width: 100%;
   background-image: url("/images/3.png");
   background-color: #8e0b0f;
@@ -43,15 +43,6 @@
 
 
 
-.icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 .menu-btn {
   color: #ffdf77;
@@ -59,16 +50,25 @@
 }
 
 /* --- MAIN CONTENT & FORM --- */
-.property-content {
+.building-content {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
   padding: 20px 15px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
+.form-header {
+  gap: 12px;
+}
+
+.form-header h2 {
+  font-size: 18px;
+  color: #a30d12;
+  margin: 0;
+}
 
 .back-btn {
   background: transparent;
@@ -82,13 +82,13 @@
   justify-content: center;
 }
 
-.property-form {
+.building-form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   padding-left: 30px;
   padding-right: 30px;
-  margin-top: -9px;
+  margin-top: 10px;
 }
 
 .form-group {
@@ -99,10 +99,10 @@
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 8px 16px;
+  padding: 10px 16px;
   background-color: #ffffff;
   border: 1px solid #e0dcd0;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 14px;
   color: #333;
   outline: none;
@@ -113,25 +113,15 @@
 .form-group input::placeholder,
 .form-group select:invalid {
   color: #888888;
-  font-style: italic;
 }
 
-/* Specific styling for the first red dropdown */
-.red-dropdown select {
-  background: linear-gradient(135deg, #b8141b 0%, #a30d12 100%);
-  color: #ffffff;
-  font-weight: 500;
-  border: none;
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #a30d12;
 }
 
-.red-dropdown select option {
-  background-color: #ffffff;
-  color: #333;
-}
-
-.red-dropdown select:invalid {
-  color: #ffffff;
-  font-style: normal;
+.select-group {
+  position: relative;
 }
 
 .dropdown-arrow {
@@ -144,75 +134,36 @@
   pointer-events: none;
 }
 
-.white-arrow {
-  color: #ffffff;
+.file-upload-group input {
+  padding-right: 50px;
 }
 
-.suffix-group {
-  position: relative;
-}
-
-.input-suffix {
+.upload-icon-btn {
   position: absolute;
-  right: 16px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 13px;
-  color: #666;
-  font-style: italic;
-  pointer-events: none;
-}
-
-/* Photo Section Card */
-.photo-section-card {
-  background: #ffffff;
-  border: 1px solid #e0dcd0;
-  border-radius: 14px;
-  padding: 12px 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.photo-label {
-  font-size: 13px;
-  color: #a30d12;
-  font-weight: 500;
-}
-
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.photo-upload-box {
-  background-color: #f7f5ef;
-  border: 1px dashed #dcd6cd;
-  border-radius: 10px;
-  height: 60px;
+  background-color: #a30d12;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
-
-.upload-icon-btn {
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
+  font-size: 14px;
 }
 
 .submit-btn {
-  margin-top: 5px;
+  margin-top: 10px;
   width: 100%;
   background: linear-gradient(135deg, #b8141b 0%, #a30d12 100%);
   color: #ffffff;
   border: none;
   border-radius: 12px;
-  padding: 14px;
+  padding: 12px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;

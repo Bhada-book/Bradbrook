@@ -3,8 +3,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f7f5f0;
-  padding-bottom: 90px; /* Bottom nav साठी जागा */
+  background-image: url("/images/back.png");
+  padding-bottom: 90px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -15,11 +15,7 @@
 }
 
 /* Form Header */
-.form-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-}
+
 
 .back-btn {
   background: none;
@@ -31,12 +27,7 @@
   padding: 0;
 }
 
-.form-header h2 {
-  font-size: 20px;
-  color: #b30000;
-  margin: 0;
-  font-weight: 600;
-}
+
 
 /* Unit Info Card */
 .unit-info-card {
@@ -73,9 +64,9 @@
 }
 
 .tenant-fullname {
-  font-size: 14px;
+  font-size: 12px;
   color: #333;
-  margin: 2px 0 0 0;
+  
   font-weight: 500;
 }
 
@@ -86,10 +77,15 @@
 }
 
 .status-badge1 {
-  font-size: 9px;
-  padding: 0px 2px;
-  border-radius: 12px;
-  font-weight: 500;
+    padding:2px 7px;
+
+    border-radius:12px;
+
+    font-size:10px;
+
+    font-weight:600;
+
+    line-height:1;
 }
 
 .status-badge1.overdue1 {
@@ -98,10 +94,15 @@
 }
 
 .badge-tag1 {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 500;
+    padding:2px 7px;
+
+    border-radius:12px;
+
+    font-size:10px;
+
+    font-weight:600;
+
+    line-height:1;
 }
 
 .badge-tag1.flat1 {
@@ -134,7 +135,7 @@
 .year-dropdown {
   display: flex;
   align-items: center;
-  background: #ffffff;
+  
   border: 1px solid #ddd;
   padding: 4px 10px;
   border-radius: 6px;
@@ -151,12 +152,12 @@
 
 /* History List Rows */
 .history-list {
-  background: #ffffff;
+ 
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   margin-bottom: 24px;
-  border: 1px solid #eee;
+  
 }
 
 .history-row {
@@ -165,6 +166,7 @@
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid #f0f0f0;
+    gap: 15px;
 }
 
 .history-row:last-child {
@@ -174,8 +176,10 @@
 .history-item-title {
   font-size: 13px;
   color: #333;
-  font-weight: 500;
+
   flex: 1;
+  text-align: left;
+
 }
 
 .history-item-details {
@@ -207,13 +211,13 @@
 }
 
 /* Record Payment Button */
-.record-payment-btn {
+.record-payment-btn1 {
   width: 100%;
   background-color: #b30000;
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  padding: 14px;
+  padding: 9px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -222,6 +226,6 @@
   transition: background-color 0.2s;
 }
 
-.record-payment-btn:hover {
+.record-payment-btn1:hover {
   background-color: #990000;
 }
