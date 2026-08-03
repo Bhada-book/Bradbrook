@@ -85,15 +85,15 @@ function App() {
             onNavigate={setCurrentPage} 
           />
         )}
-        {currentPage === 'unitLedger' && (
-  <UnitLedger 
-    onBack={() => setCurrentPage('tenantList')} 
-    onNavigate={setCurrentPage} 
-  />
-)}
-{currentPage === 'tenantProfile' && (
+       {currentPage === 'unit-ledger' && (
+        <UnitLedger 
+          onBack={() => setCurrentPage('home')} 
+          onNavigate={setCurrentPage} 
+        />
+      )}
+{currentPage === 'profile' && (
   <TenantProfile 
-    onBack={() => setCurrentPage('tenantList')} 
+    onBack={() => setCurrentPage('home')} 
     onNavigate={setCurrentPage} 
   />
 )}

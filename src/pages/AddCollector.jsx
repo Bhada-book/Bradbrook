@@ -76,7 +76,7 @@ export default function AddCollector({ onBack, onNavigate }) {
               <option value="maharashtra">Maharashtra</option>
               <option value="karnataka">Karnataka</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group select-group">
@@ -85,7 +85,7 @@ export default function AddCollector({ onBack, onNavigate }) {
               <option value="pune">Pune</option>
               <option value="mumbai">Mumbai</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group">

@@ -5,15 +5,14 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
   if (!isOpen) return null;
 
   const menuOptions = [
-    { name: 'Tenant History', page: 'history', icon: '📜' },
-
-    { name: 'Tenant List', page: 'tenantList', icon: '📋' },
-    { name: 'Tenant Profile', page: 'tenantProfile', icon: '📇' },
-    { name: 'Unit Ledger / Payments', page: 'unitLedger', icon: '💰' },
-    { name: 'Admin Profile', page: 'adminProfile', icon: '⚙️' },
-    { name: 'Add Manager', page: 'addManager', icon: '➕' },
-    { name: 'Add Collector', page: 'addCollector', icon: '➕' },
-    { name: 'Overdue Details', page: 'overdue', icon: '⚠️' },
+    { name: 'Tenant History', page: 'history'},
+    { name: 'Tenant List', page: 'tenantList' },
+    { name: 'Tenant Profile', page: 'profile'},
+    { name: 'Unit Ledger / Payments', page: 'unit-ledger' },
+    { name: 'Admin Profile', page: 'adminProfile' },
+    { name: 'Add Manager', page: 'addManager'},
+    { name: 'Add Collector', page: 'addCollector'},
+    { name: 'Overdue Details', page: 'overdue' },
   ];
 
   return (

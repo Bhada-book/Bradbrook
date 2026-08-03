@@ -1,4 +1,6 @@
-.notifications-container {
+.body{
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}.notifications-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -89,10 +91,10 @@ text-align: left;
 .status-badge {
   padding: 4px 10px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 8px;
   font-weight: bold;
-  text-align: center;
-  min-width: 75px;
+  text-align: left;
+  min-width: 7px;
 }
 
 .status-approved {

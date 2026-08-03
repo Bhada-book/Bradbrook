@@ -63,7 +63,7 @@ export default function UnitLedger({ onBack, onNavigate }) {
             <span className="summary-title-tab">Collection Summary</span>
             <div className="year-dropdown">
               <span>2026</span>
-              <span className="arrow">▼</span>
+              <span className="arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export default function UnitLedger({ onBack, onNavigate }) {
             <h3>Ledger</h3>
             <div className="year-dropdown">
               <span>2026</span>
-              <span className="arrow">▼</span>
+              <span className="arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
             </div>
           </div>
 

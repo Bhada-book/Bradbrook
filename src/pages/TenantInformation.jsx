@@ -55,7 +55,7 @@ export default function TenantInformation({ onBack, onNavigate}) {
               <option value="" disabled>Building or Complex</option>
               <option value="complex1">Complex 1</option>
             </select>
-            <span className="dropdown-arrow white-arrow">▼</span>
+            <span className="dropdown-arrow white-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group select-group red-dropdown">
@@ -63,7 +63,7 @@ export default function TenantInformation({ onBack, onNavigate}) {
               <option value="" disabled>Property or Unit</option>
               <option value="unit1">Unit 101</option>
             </select>
-            <span className="dropdown-arrow white-arrow">▼</span>
+            <span className="dropdown-arrow white-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <p className="section-subtitle">Create a new account</p>
@@ -97,7 +97,7 @@ export default function TenantInformation({ onBack, onNavigate}) {
               <option value="" disabled>State</option>
               <option value="state1">State 1</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group select-group">
@@ -105,7 +105,7 @@ export default function TenantInformation({ onBack, onNavigate}) {
               <option value="" disabled>City</option>
               <option value="city1">City 1</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group">
@@ -155,7 +155,7 @@ export default function TenantInformation({ onBack, onNavigate}) {
               <option value="online">Online</option>
               <option value="cash">Cash</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group">

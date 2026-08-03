@@ -5,20 +5,48 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  
+  // State to track error messages for each field
+  const [mobileError, setMobileError] = useState('');
+  const [otpError, setOtpError] = useState('');
 
   const handleSendOtp = () => {
+    // Clear previous mobile error
+    setMobileError('');
+
     if (mobile.length === 10) {
       setOtpSent(true);
-      alert('OTP sent to ' + mobile);
+      alert('OTP sent to ' + mobile); // Or replace with your success banner
     } else {
-      alert('Please enter a valid 10-digit mobile number');
+      setMobileError('Please enter a valid 10-digit mobile number');
     }
   };
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Trigger login success to switch to the dashboard view
-    onLoginSuccess();
+    
+    let isValid = true;
+
+    // Validate mobile number
+    if (mobile.length !== 10) {
+      setMobileError('Mobile number must be exactly 10 digits');
+      isValid = false;
+    } else {
+      setMobileError('');
+    }
+
+    // Validate OTP
+    if (otp.length !== 6) {
+      setOtpError('OTP must be exactly 6 digits');
+      isValid = false;
+    } else {
+      setOtpError('');
+    }
+
+    // If both are valid, proceed to home page
+    if (isValid) {
+      onLoginSuccess();
+    }
   };
 
   return (
@@ -37,7 +65,7 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
       <div className="login-form-section">
         
         {/* Google Continue Button */}
-        <button className="google-btn" onClick={onLoginSuccess}>
+        <button className="google-btn" onClick={onLoginSuccess} type="button">
           <img 
             src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
             alt="Google logo" 
@@ -57,28 +85,42 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
               type="tel" 
               placeholder="Mobile Number" 
               value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
+              onChange={(e) => {
+                setMobile(e.target.value.replace(/\D/g, ''));
+                if (mobileError) setMobileError(''); // Clear error as user types
+              }}
               maxLength={10}
               required
             />
+            {/* Mobile Error Message */}
+            {mobileError && <span className="error-text">{mobileError}</span>}
           </div>
 
           {/* OTP Input with Send OTP */}
           <div className="input-group otp-group">
-            <input 
-              type="text" 
-              placeholder="OTP" 
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              maxLength={6}
-              required
-            />
-            <button type="button" className="send-otp-btn" onClick={handleSendOtp}>
-              Send OTP
-            </button>
+            <div className="otp-input-wrapper" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input 
+                  type="text" 
+                  placeholder="OTP" 
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value.replace(/\D/g, ''));
+                    if (otpError) setOtpError(''); // Clear error as user types
+                  }}
+                  maxLength={6}
+                  required
+                />
+                <button type="button" className="send-otp-btn" onClick={handleSendOtp}>
+                  Send OTP
+                </button>
+              </div>
+              {/* OTP Error Message */}
+              {otpError && <span className="error-text">{otpError}</span>}
+            </div>
           </div>
           
-          <span className="resend-text">Resend OTP</span>
+          <span className="resend-text" onClick={handleSendOtp}>Resend OTP</span>
 
           {/* Log In Button */}
           <button type="submit" className="login-submit-btn">

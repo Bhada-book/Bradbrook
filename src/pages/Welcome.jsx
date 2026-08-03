@@ -8,7 +8,7 @@ export default function Welcome({ onContinue }) {
         
         {/* --- TOP SECTION --- */}
         <div className="header-section">
-          <img src="/images/blogo.png" style={{ height: '120px' }} alt="Logo" />
+          <img src="/images/blogo.png" style={{ height: '150px' }} alt="Logo" />
         </div>
 
         {/* --- MIDDLE LOGO SECTION --- */}

@@ -78,7 +78,7 @@ export default function BuildingDetails({ onBack ,onNavigate }) {
               <option value="state1">State 1</option>
               <option value="state2">State 2</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group select-group">
@@ -87,7 +87,7 @@ export default function BuildingDetails({ onBack ,onNavigate }) {
               <option value="city1">City 1</option>
               <option value="city2">City 2</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group">

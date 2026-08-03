@@ -67,7 +67,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
               <option value="complex1">Complex 1</option>
               <option value="complex2">Complex 2</option>
             </select>
-            <span className="dropdown-arrow white-arrow">▼</span>
+            <span className="dropdown-arrow white-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group select-group">
@@ -76,7 +76,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
               <option value="flat">Flat</option>
               <option value="commercial">Commercial</option>
             </select>
-            <span className="dropdown-arrow">▼</span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
 
           <div className="form-group">

@@ -1,4 +1,7 @@
 /* Backdrop Overlay */
+.body{
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 .side-menu-overlay {
   position: fixed;
   top: 0;

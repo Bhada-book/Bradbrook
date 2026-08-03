@@ -1,3 +1,6 @@
+.body{
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 .unit-ledger-container {
   display: flex;
   flex-direction: column;
@@ -67,30 +70,15 @@ padding-right: 30px;
   font-size: 10px;
 }
 
-.summary-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
 
-.summary-card {
-  background: #fdfdfd;
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-
-  text-align: center;
-}
 
 .card-label {
   font-size: 11px;
   color: #777;
 }
 
-.summary-card h3 {
-  font-size: 13px;
-  color: #222;
 
-}
+
 
 .status-green {
   color: #008037;

@@ -80,7 +80,7 @@ export default function TenantHistory({ onBack, onNavigate }) {
           <h3>History</h3>
           <div className="year-dropdown">
             <span>2026</span>
-            <span className="arrow">▼</span>
+            <span className="arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
           </div>
         </div>
 

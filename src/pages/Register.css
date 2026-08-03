@@ -1,3 +1,6 @@
+.body{
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 .register-page-container {
   min-height: 100vh;
   display: flex;
@@ -6,7 +9,13 @@
   background-color: transparent;
   padding-bottom: 40px;
 }
-
+.error-text {
+  color: #ff3b30;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+  text-align: left;
+}
 /* --- TOP HEADER CARD --- */
 .register-header-card {
   width: 100%;

@@ -59,7 +59,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
             <h2>July 2026 - Collection Summary</h2>
             <div className="dropdown-filter">
               <span>Property</span>
-              <span className="arrow">▼</span>
+              <span className="arrow" style={{height:'20px'}}><img src='images/arrow.png'></img></span>
             </div>
           </div>
 
@@ -91,8 +91,8 @@ export default function PropertyDetails({ onBack, onNavigate }) {
           <div className="section-header-bar1">
             <h3>UNITS</h3>
             <div className="filters-row">
-              <div className="mini-dropdown">Property <span>▼</span></div>
-              <div className="mini-dropdown">Status <span>▼</span></div>
+              <div className="mini-dropdown">Property <span style={{height:'20px'}}><img src='images/arrow.png'></img></span></div>
+              <div className="mini-dropdown">Status <span style={{height:'20px'}}><img src='images/arrow.png'></img></span></div>
             </div>
           </div>
           <hr></hr>
@@ -207,7 +207,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
           <div className="section-header-bar1">
             <h3>VACANT UNITS</h3>
             <div className="filters-row">
-              <div className="mini-dropdown">Property <span>▼</span></div>
+              <div className="mini-dropdown">Property <span style={{height:'20px'}}><img src='images/arrow.png'></img></span></div>
             </div>
           </div>
           <hr></hr>

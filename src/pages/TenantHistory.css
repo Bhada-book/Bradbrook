@@ -1,4 +1,7 @@
 /* Tenant History Container */
+.body{
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 .tenant-history-container {
   display: flex;
   flex-direction: column;
@@ -64,7 +67,7 @@
 }
 
 .tenant-fullname {
-  font-size: 12px;
+  font-size: 11px;
   color: #333;
   
   font-weight: 500;
@@ -74,14 +77,15 @@
   display: flex;
   margin-bottom: -20px;
   align-items: center;
+  gap:5px;
 }
 
 .status-badge1 {
-    padding:2px 7px;
+    padding:2px 4px;
 
     border-radius:12px;
 
-    font-size:10px;
+    font-size:9px;
 
     font-weight:600;
 
@@ -106,8 +110,9 @@
 }
 
 .badge-tag1.flat1 {
-  background-color: #f0f0f0;
-  color: #555;
+
+  color: #c51c1c;
+  background-color: #dddada;
 }
 
 .unit-info-footer {

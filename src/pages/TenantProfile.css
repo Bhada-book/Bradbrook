@@ -1,3 +1,6 @@
+.body{
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 .tenant-profile-container {
   display: flex;
   flex-direction: column;
