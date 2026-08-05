@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { db } from '../firebase.js';
+import { doc, setDoc } from 'firebase/firestore';
 import './Register.css';
 
 export default function Register({ onRegisterSuccess, onBackToLogin }) {
@@ -39,7 +41,7 @@ export default function Register({ onRegisterSuccess, onBackToLogin }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     let newErrors = {};
 
@@ -79,8 +81,26 @@ export default function Register({ onRegisterSuccess, onBackToLogin }) {
       return;
     }
 
-    // Success
-    onRegisterSuccess();
+    try {
+      // Save user data to Firestore database
+      await setDoc(doc(db, 'users', formData.mobile), {
+        name: formData.name,
+        surname: formData.surname,
+        mobile: formData.mobile,
+        email: formData.email,
+        town: formData.town,
+        state: formData.state,
+        city: formData.city,
+        pinCode: formData.pinCode,
+        createdAt: new Date()
+      });
+
+      // Success
+      onRegisterSuccess();
+    } catch (error) {
+      console.error('Error saving user data: ', error);
+      alert('Registration failed. Please try again.');
+    }
   };
 
   return (

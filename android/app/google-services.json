@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "845123566014",
+    "project_id": "bhadabook-9ba62",
+    "storage_bucket": "bhadabook-9ba62.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845123566014:android:92094d4a83ce39b66a61ef",
+        "android_client_info": {
+          "package_name": "com.bhadabook.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAJdw4cwTyq8tVJ06O3lStDDbRH-QiDxY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
