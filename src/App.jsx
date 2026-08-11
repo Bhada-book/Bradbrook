@@ -14,15 +14,19 @@ import UnitLedger from './pages/UnitLedger';
 import TenantProfile from './pages/TenantProfile';
 import Notifications from './pages/Notifications';
 import AdminProfile from './pages/AdminProfile';
+import AdminDetail from './pages/AdminDetail';
 import BottomNavWithPopup from './pages/BottomNavWithPopup';
 import AddManager from './pages/AddManager';
 import AddCollector from './pages/AddCollector';
 import Overdue from './pages/Overdue';
+import DocumentViewer from './pages/DocumentViewer';
 
 function App() {
   const [currentStep, setCurrentStep] = useState('welcome'); 
   const [currentPage, setCurrentPage] = useState('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [editingTenantData, setEditingTenantData] = useState(null);
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   if (currentStep === 'welcome') {
     return <Welcome onContinue={() => setCurrentStep('login')} />;
@@ -50,90 +54,81 @@ function App() {
     return (
       <div className="app-container">
         {currentPage === 'home' && (
-          <Home 
-            onNavigate={setCurrentPage} 
-            onOpenMenu={() => setIsMenuOpen(true)} 
-          />
+          <Home onNavigate={setCurrentPage} onOpenMenu={() => setIsMenuOpen(true)} />
         )}
         {currentPage === 'building' && (
-          <BuildingDetails 
-            onBack={() => setCurrentPage('home')} 
-            onNavigate={setCurrentPage} 
-          />
+          <BuildingDetails onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
         )}
         {currentPage === 'property' && (
-          <PropertyDetails 
-            onBack={() => setCurrentPage('home')} 
-            onNavigate={setCurrentPage} 
-          />
+          <PropertyDetails onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
         )}
         {currentPage === 'tenant' && (
           <TenantInformation 
-            onBack={() => setCurrentPage('home')} 
-            onNavigate={setCurrentPage} 
+            onBack={() => { setEditingTenantData(null); setCurrentPage('tenantList'); }} 
+            onNavigate={(page) => { setEditingTenantData(null); setCurrentPage(page); }}
+            editData={editingTenantData} 
           />
         )}
         {currentPage === 'history' && (
-          <TenantHistory 
-            onBack={() => setCurrentPage('home')} 
-            onNavigate={setCurrentPage} 
-          />
+          <TenantHistory onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
         )}
         {currentPage === 'tenantList' && (
           <TenantList 
             onBack={() => setCurrentPage('home')} 
             onNavigate={setCurrentPage} 
+            onEditTenant={(tenant) => { setEditingTenantData(tenant); setCurrentPage('tenant'); }}
           />
         )}
-       {currentPage === 'unit-ledger' && (
-        <UnitLedger 
-          onBack={() => setCurrentPage('home')} 
-          onNavigate={setCurrentPage} 
-        />
-      )}
-{currentPage === 'profile' && (
-  <TenantProfile 
-    onBack={() => setCurrentPage('home')} 
+        {currentPage === 'unit-ledger' && (
+          <UnitLedger onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
+        )}
+        {currentPage === 'profile' && (
+          <TenantProfile onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
+        )}
+        {currentPage === 'notifications' && (
+          <Notifications onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
+        )}
+        {currentPage === 'adminProfile' && (
+          <AdminProfile 
+            onBack={() => setCurrentPage('home')} 
+            onNavigate={setCurrentPage} 
+            onEditProfile={(profile) => setSelectedProfile(profile)}
+          />
+        )}
+        {currentPage === 'adminDetail' && (
+          <AdminDetail 
+            onBack={() => { setSelectedProfile(null); setCurrentPage('adminProfile'); }} 
+            onNavigate={(page) => { setSelectedProfile(null); setCurrentPage(page); }} 
+            adminData={selectedProfile} 
+          />
+        )}
+        {currentPage === 'addManager' && (
+          <AddManager 
+            onBack={() => { setSelectedProfile(null); setCurrentPage('adminProfile'); }} 
+            onNavigate={(page) => { setSelectedProfile(null); setCurrentPage(page); }} 
+            editData={selectedProfile} 
+          />
+        )}
+        {currentPage === 'addCollector' && (
+          <AddCollector 
+            onBack={() => { setSelectedProfile(null); setCurrentPage('adminProfile'); }} 
+            onNavigate={(page) => { setSelectedProfile(null); setCurrentPage(page); }} 
+            editData={selectedProfile} 
+          />
+        )}
+        {currentPage === 'overdue' && (
+          <Overdue onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
+        )}
+        {currentPage === 'documentViewer' && (
+  <DocumentViewer 
+    onBack={() => setCurrentPage('adminProfile')} 
     onNavigate={setCurrentPage} 
   />
 )}
-{currentPage === 'notifications' && (
-  <Notifications 
-    onBack={() => setCurrentPage('home')} 
-    onNavigate={setCurrentPage} 
-  />
-)}
-{currentPage === 'adminProfile' && (
-  <AdminProfile 
-    onBack={() => setCurrentPage('home')} 
-    onNavigate={setCurrentPage} 
-  />
-)}
-{currentPage === 'addManager' &&(
-  <AddManager
-  onBack={() => setCurrentPage('home')}
-  onNavigate={setCurrentPage}
-  />
-)}
-{currentPage === 'addCollector' &&(
-  <AddCollector
-  onBack={() => setCurrentPage('home')}
-  onNavigate={setCurrentPage}
-  />
-)}
-{currentPage === 'overdue' && (
-  <Overdue onBack={() => setCurrentPage('home')}
-  onNavigate={setCurrentPage}
-  />
-)}
-        {/* --- GLOBAL SIDE MENU DRAWER --- */}
         <SideMenuDrawer 
           isOpen={isMenuOpen} 
           onClose={() => setIsMenuOpen(false)} 
-          onNavigate={(page) => {
-            setCurrentPage(page);
-            setIsMenuOpen(false);
-          }} 
+          onNavigate={(page) => { setCurrentPage(page); setIsMenuOpen(false); }} 
         />
       </div>
     );

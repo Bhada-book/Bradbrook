@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import './TenantInformation.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
-import { db } from '../firebase.js'; 
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db, storage } from '../firebase.js'; 
+import { collection, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-export default function TenantInformation({ onBack, onNavigate }) {
+export default function TenantInformation({ onBack, onNavigate, editData }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  // Dropdown options data fetched from Firebase
   const [buildings, setBuildings] = useState([]);
   const [properties, setProperties] = useState([]);
 
-  // Form state inputs
   const [formData, setFormData] = useState({
     buildingOrComplex: '',
     propertyOrUnit: '',
@@ -25,7 +25,7 @@ export default function TenantInformation({ onBack, onNavigate }) {
     state: '',
     city: '',
     pinCode: '',
-    document: '', // Placeholder for document upload URL/status
+    document: '', // Stores Aadhar/Document URL
     tenantId: '',
     moveInDate: '',
     securityDeposit: '',
@@ -35,12 +35,31 @@ export default function TenantInformation({ onBack, onNavigate }) {
     parking: '',
     monthlyPayment: '',
     expectedDeposit: '',
-    agreementCopy: '', // Placeholder for agreement copy URL/status
+    agreementCopy: '', // Stores Agreement Copy URL
     agreementEndDate: '',
-    yearlyHike: ''
+    yearlyHike: '',
+    propertyPhotos: []
   });
 
-  // Fetch buildings and properties from Firestore on load
+  useEffect(() => {
+    if (editData) {
+      const nameParts = (editData.name || '').split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      setFormData(prev => ({
+        ...prev,
+        ...editData,
+        name: editData.name || firstName,
+        surname: editData.surname || lastName,
+        propertyOrUnit: editData.propertyOrUnit || editData.unitId || '',
+        moveInDate: editData.moveInDate || editData.since || '',
+        mobile: editData.mobile || editData.phone || '',
+        propertyPhotos: editData.propertyPhotos || (editData.propertyPhoto ? [editData.propertyPhoto] : [])
+      }));
+    }
+  }, [editData]);
+
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
@@ -51,7 +70,6 @@ export default function TenantInformation({ onBack, onNavigate }) {
         }));
         setProperties(propList);
 
-        // Extract unique buildings/complexes
         const uniqueBuildings = [...new Set(propList.map(item => item.buildingOrComplex).filter(Boolean))];
         setBuildings(uniqueBuildings);
       } catch (error) {
@@ -62,40 +80,104 @@ export default function TenantInformation({ onBack, onNavigate }) {
     fetchDropdownData();
   }, []);
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle Form Submission to Firebase Firestore
+  // Generic Firebase Storage Upload Handler for single files (Document or Agreement)
+  const handleSingleFileUpload = async (e, fieldName) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `tenant_files/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: downloadUrl
+      }));
+    } catch (error) {
+      console.error('Error uploading file: ', error);
+      alert('Failed to upload file: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Multiple Image Upload Handler for Property Photos
+  const handleStorageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const storageRef = ref(storage, `tenants_photos/${Date.now()}_${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(snapshot.ref);
+        uploadedUrls.push(downloadUrl);
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        propertyPhotos: [...prev.propertyPhotos, ...uploadedUrls]
+      }));
+    } catch (error) {
+      console.error('Error uploading image: ', error);
+      alert('Failed to upload image: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemovePhoto = (indexToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      propertyPhotos: prev.propertyPhotos.filter((_, index) => index !== indexToRemove)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'tenants'), {
-        ...formData,
-        createdAt: new Date()
-      });
-      alert('Tenant added successfully!');
+      if (editData && editData.id && editData.id.length > 3) {
+        const tenantRef = doc(db, 'tenants', editData.id);
+        await updateDoc(tenantRef, {
+          ...formData,
+          updatedAt: new Date()
+        });
+        alert('Tenant updated successfully!');
+      } else {
+        await addDoc(collection(db, 'tenants'), {
+          ...formData,
+          createdAt: new Date()
+        });
+        alert('Tenant added successfully!');
+      }
+
       if (onNavigate) {
-        onNavigate('home'); // Redirect back home or wherever appropriate after adding
+        onNavigate('tenantList'); 
       }
     } catch (error) {
-      console.error('Error adding tenant: ', error);
-      alert('Failed to add tenant: ' + error.message);
+      console.error('Error saving tenant: ', error);
+      alert('Failed to save tenant: ' + error.message);
     }
   };
 
   return (
     <div className="tenant-container">
-      {/* --- TOP NAVBAR --- */}
       <header className="home-navbar">
         <div className="nav-logo-area">
           <img src="/images/logot.png" alt="Logo" className="nav-blogo" />
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-           <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
+           <span className="search-icon"><img src='images/Vector.png' alt="Search" /></span>
             <input type="text" placeholder="Search" />
           </div>
           <button 
@@ -121,16 +203,14 @@ export default function TenantInformation({ onBack, onNavigate }) {
         onNavigate={onNavigate} 
       />
 
-      {/* --- MAIN CONTENT AREA --- */}
       <main className="tenant-content">
         <div className="form-header">
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>Tenant Information</h2>
+          <h2>{editData ? 'Edit Tenant Information' : 'Tenant Information'}</h2>
         </div>
-        <hr></hr>
+        <hr />
 
         <form className="tenant-form" onSubmit={handleSubmit}>
-          {/* Top Red Dropdowns */}
           <div className="form-group select-group red-dropdown">
             <select 
               name="buildingOrComplex" 
@@ -144,7 +224,7 @@ export default function TenantInformation({ onBack, onNavigate }) {
               ))}
             </select>
             <span className="dropdown-arrow white-arrow" style={{height:'20px'}}>
-              <img src='images/arrow.png' alt="Arrow"></img>
+              <img src='images/arrow.png' alt="Arrow" />
             </span>
           </div>
 
@@ -163,11 +243,11 @@ export default function TenantInformation({ onBack, onNavigate }) {
                 ))}
             </select>
             <span className="dropdown-arrow white-arrow" style={{height:'20px'}}>
-              <img src='images/arrow.png' alt="Arrow"></img>
+              <img src='images/arrow.png' alt="Arrow" />
             </span>
           </div>
 
-          <p className="section-subtitle">Create a new account</p>
+          <p className="section-subtitle">{editData ? 'Update account details' : 'Create a new account'}</p>
 
           <div className="form-group">
             <input type="text" name="name" placeholder="Name" value={formData.name} onChange={handleChange} required />
@@ -200,7 +280,7 @@ export default function TenantInformation({ onBack, onNavigate }) {
               <option value="Delhi">Delhi</option>
               <option value="Karnataka">Karnataka</option>
             </select>
-            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
 
           <div className="form-group select-group">
@@ -210,18 +290,36 @@ export default function TenantInformation({ onBack, onNavigate }) {
               <option value="Mumbai">Mumbai</option>
               <option value="Bangalore">Bangalore</option>
             </select>
-            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
 
           <div className="form-group">
             <input type="text" name="pinCode" placeholder="Pin Code" value={formData.pinCode} onChange={handleChange} />
           </div>
 
+          {/* Document Upload Input */}
           <div className="form-group upload-row-group">
-            <input type="text" placeholder="Document  (Adhaar/Pan/DL)" value={formData.document} readOnly />
-            <button type="button" className="upload-inline-btn" aria-label="Upload Document">
-             <img src="images/Group5.png" style={{height:"20px"}} alt="Upload"></img>
-            </button>
+            <input 
+              type="text" 
+              placeholder="Document (Aadhar/Pan/DL)" 
+              value={formData.document ? 'Document Uploaded Successfully' : ''} 
+              readOnly 
+            />
+            {formData.document && (
+              <a href={formData.document} target="_blank" rel="noopener noreferrer" style={{ marginRight: '8px', fontSize: '12px' }}>
+                View
+              </a>
+            )}
+            <label htmlFor="document-file-input" className="upload-inline-btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <img src="images/Group5.png" style={{height:"20px"}} alt="Upload" />
+            </label>
+            <input 
+              id="document-file-input" 
+              type="file" 
+              accept=".pdf,image/*" 
+              style={{ display: 'none' }} 
+              onChange={(e) => handleSingleFileUpload(e, 'document')} 
+            />
           </div>
 
           <p className="section-subtitle">Commercial Information</p>
@@ -260,18 +358,36 @@ export default function TenantInformation({ onBack, onNavigate }) {
               <option value="Online">Online</option>
               <option value="Cash">Cash</option>
             </select>
-            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
 
           <div className="form-group">
             <input type="number" name="expectedDeposit" placeholder="Expected Deposit" value={formData.expectedDeposit} onChange={handleChange} />
           </div>
 
+          {/* Agreement Copy Upload Input */}
           <div className="form-group upload-row-group">
-            <input type="text" placeholder="Agreement Copy  (PDF/JPG)" value={formData.agreementCopy} readOnly />
-            <button type="button" className="upload-inline-btn" aria-label="Upload Agreement">
-             <img src="images/Group5.png" style={{height:"20px"}} alt="Upload"></img>
-            </button>
+            <input 
+              type="text" 
+              placeholder="Agreement Copy (PDF/JPG)" 
+              value={formData.agreementCopy ? 'Agreement Uploaded Successfully' : ''} 
+              readOnly 
+            />
+            {formData.agreementCopy && (
+              <a href={formData.agreementCopy} target="_blank" rel="noopener noreferrer" style={{ marginRight: '8px', fontSize: '12px' }}>
+                View
+              </a>
+            )}
+            <label htmlFor="agreement-file-input" className="upload-inline-btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <img src="images/Group5.png" style={{height:"20px"}} alt="Upload" />
+            </label>
+            <input 
+              id="agreement-file-input" 
+              type="file" 
+              accept=".pdf,image/*" 
+              style={{ display: 'none' }} 
+              onChange={(e) => handleSingleFileUpload(e, 'agreementCopy')} 
+            />
           </div>
 
           <div className="form-group">
@@ -282,21 +398,46 @@ export default function TenantInformation({ onBack, onNavigate }) {
             <input type="number" name="yearlyHike" placeholder="Yearly Hike %" value={formData.yearlyHike} onChange={handleChange} />
           </div>
 
-          {/* Handover Property Photos Card */}
+          {/* Handover Property Photos Section */}
           <div className="photo-section-card">
             <label className="photo-label">Handover Property Photos</label>
-            <div className="photo-grid">
-              {[1].map((_, index) => (
-                <div className="photo-upload-box" key={index}>
-                  <button type="button" className="upload-icon-btn" aria-label="Upload Photo">
-                    <img src="/images/Group.png" alt="Photo upload"></img>
+            {uploading && <p style={{ color: 'blue', fontSize: '12px', margin: '4px 0' }}>Uploading files...</p>}
+            
+            <div className="photo-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px', alignItems: 'center' }}>
+              {formData.propertyPhotos.map((photoUrl, index) => (
+                <div key={index} style={{ position: 'relative', width: '70px', height: '70px', flexShrink: 0, border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden', background: '#f9f9f9' }}>
+                  <a href={photoUrl} target="_blank" rel="noopener noreferrer" title="Click to view full image">
+                    <img src={photoUrl} alt={`Preview ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }} />
+                  </a>
+                  <button 
+                    type="button" 
+                    onClick={() => handleRemovePhoto(index)}
+                    style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(255, 0, 0, 0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '18px', height: '18px', cursor: 'pointer', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    ✕
                   </button>
                 </div>
               ))}
+              
+              <div style={{ width: '70px', height: '70px', border: '1px dashed #bbb', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', flexShrink: 0 }}>
+                <label htmlFor="storage-photos-input" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                  <img src="/images/Group.png" alt="Add photo" style={{ height: '22px', objectFit: 'contain' }} />
+                </label>
+                <input 
+                  id="storage-photos-input" 
+                  type="file" 
+                  accept="image/*" 
+                  multiple 
+                  style={{ display: 'none' }} 
+                  onChange={handleStorageUpload} 
+                />
+              </div>
             </div>
           </div>
 
-          <button type="submit" className="submit-btn">Add</button>
+          <button type="submit" className="submit-btn" disabled={uploading}>
+            {uploading ? 'Processing...' : (editData ? 'Update' : 'Add')}
+          </button>
         </form>
       </main>
       

@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './AddCollector.css';
+import React, { useState, useEffect } from 'react';
+import './AddManager.css'; 
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 
-export default function AddCollector({ onBack, onNavigate, editData }) {
+export default function AdminDetail({ onBack, onNavigate, adminData }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const fileInputRef = useRef(null);
-
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
@@ -17,81 +15,45 @@ export default function AddCollector({ onBack, onNavigate, editData }) {
     permanentAddress: '',
     state: '',
     city: '',
-    pinCode: '',
-    document: ''
+    pinCode: ''
   });
 
-  // Automatically populate the form fields when editData is passed
+  // Automatically populate data when loaded
   useEffect(() => {
-    if (editData) {
+    if (adminData) {
       setFormData({
-        name: editData.name || '',
-        surname: editData.surname || '',
-        mobile: editData.mobile || '',
-        email: editData.email || '',
-        permanentAddress: editData.permanentAddress || '',
-        state: editData.state || '',
-        city: editData.city || '',
-        pinCode: editData.pinCode || '',
-        document: editData.document || ''
+        name: adminData.name || '',
+        surname: adminData.surname || '',
+        mobile: adminData.mobile || '',
+        email: adminData.email || '',
+        permanentAddress: adminData.permanentAddress || '',
+        state: adminData.state || '',
+        city: adminData.city || '',
+        pinCode: adminData.pinCode || adminData.pincode || ''
       });
     }
-  }, [editData]);
+  }, [adminData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle file selection from the hidden file input
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        document: file.name
-      }));
-    }
-  };
-
-  // Trigger hidden file input click when upload button is clicked
-  const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      if (editData && editData.id) {
-        // Update existing record in Firestore
-        const docRef = doc(db, editData.collectionName || 'collectors', editData.id);
-        await updateDoc(docRef, {
+      if (adminData && adminData.id) {
+        const adminRef = doc(db, adminData.collectionName || 'users', adminData.id);
+        await updateDoc(adminRef, {
           ...formData,
           updatedAt: new Date()
         });
-        alert('Collector updated successfully!');
-      } else {
-        // Add new record
-        await addDoc(collection(db, 'collectors'), {
-          ...formData,
-          createdAt: new Date()
-        });
-        alert('Collector added successfully to Firebase!');
-      }
-
-      if (onBack) {
-        onBack();
-      } else if (onNavigate) {
-        onNavigate('profile');
+        alert('Admin profile updated successfully!');
+        if (onBack) onBack(); // Automatically go back after saving
       }
     } catch (error) {
-      console.error('Error saving collector document: ', error);
-      alert('Failed to save collector details.');
+      console.error('Error updating admin profile:', error);
+      alert('Failed to update profile.');
     }
   };
 
@@ -134,11 +96,12 @@ export default function AddCollector({ onBack, onNavigate, editData }) {
       <main className="building-content">
         <div className="form-header" style={{ display: 'flex', alignItems: 'center' }}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>{editData ? 'Edit Collector' : 'Add Collector'}</h2>
+          <h2>Edit Admin / Landlord Details</h2>
         </div>
         <hr />
 
-        <form className="building-form" onSubmit={handleSubmit}>
+        {/* Editable form shows directly */}
+        <form className="building-form" onSubmit={handleUpdate} style={{ marginTop: '15px' }}>
           <div className="form-group">
             <input 
               type="text" 
@@ -231,33 +194,10 @@ export default function AddCollector({ onBack, onNavigate, editData }) {
             />
           </div>
 
-          {/* Hidden File Input for Image/Document Upload */}
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            style={{ display: 'none' }} 
-            accept="image/*,.pdf" 
-            onChange={handleFileChange} 
-          />
-
-          <div className="form-group file-upload-group">
-            <input 
-              type="text" 
-              placeholder="Document (Adhaar/Pan/DL)" 
-              value={formData.document}
-              readOnly 
-            />
-            <button 
-              type="button" 
-              className="upload-icon-btn" 
-              aria-label="Upload Document"
-              onClick={handleUploadClick}
-            >
-              <img src='images/Group5.png' alt="Upload" />
-            </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button type="submit" className="submit-btn" style={{ flex: 1 }}>Save Changes</button>
+            <button type="button" className="submit-btn" style={{ flex: 1, background: '#6c757d' }} onClick={onBack}>Cancel</button>
           </div>
-
-          <button type="submit" className="submit-btn">{editData ? 'Update Collector' : 'Add Collector'}</button>
         </form>
       </main>
 

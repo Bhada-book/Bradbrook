@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './BuildingDetails.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
-import { db } from '../firebase.js'; // Make sure the path to your firebase config is correct
-import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase.js'; 
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 
-export default function BuildingDetails({ onBack, onNavigate }) {
+export default function BuildingDetails({ onBack, onNavigate, editData }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // State to hold form input values
@@ -20,26 +20,56 @@ export default function BuildingDetails({ onBack, onNavigate }) {
     pinCode: ''
   });
 
+  // Automatically fill the form if editData is passed
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        propertyNickname: editData.propertyNickname || '',
+        buildingName: editData.buildingName || '',
+        wing: editData.wing || '',
+        googleLocation: editData.googleLocation || '',
+        town: editData.town || '',
+        state: editData.state || '',
+        city: editData.city || '',
+        pinCode: editData.pinCode || ''
+      });
+    }
+  }, [editData]);
+
   // Handle changes for inputs and selects
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission to Firebase Firestore
+  // Handle form submission to Firebase Firestore (supports Add & Edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'buildings'), {
-        ...formData,
-        createdAt: new Date()
-      });
-      alert('Building details stored successfully in Firebase!');
+      if (editData && editData.id) {
+        // Update existing record
+        const docRef = doc(db, 'buildings', editData.id);
+        await updateDoc(docRef, {
+          ...formData,
+          updatedAt: new Date()
+        });
+        alert('Building details updated successfully!');
+      } else {
+        // Add new record
+        await addDoc(collection(db, 'buildings'), {
+          ...formData,
+          createdAt: new Date()
+        });
+        alert('Building details stored successfully in Firebase!');
+      }
+
       if (onBack) {
         onBack();
+      } else if (onNavigate) {
+        onNavigate('home');
       }
     } catch (error) {
-      console.error('Error adding building document: ', error);
+      console.error('Error saving building document: ', error);
       alert('Failed to save building details.');
     }
   };
@@ -83,7 +113,7 @@ export default function BuildingDetails({ onBack, onNavigate }) {
       <main className="building-content">
         <div className="form-header">
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>Building or Complex Details</h2>
+          <h2>{editData ? 'Edit Building Details' : 'Building or Complex Details'}</h2>
         </div>
         <hr />
 
@@ -148,8 +178,8 @@ export default function BuildingDetails({ onBack, onNavigate }) {
               required
             >
               <option value="" disabled>State</option>
-              <option value="state1">State 1</option>
-              <option value="state2">State 2</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Karnataka">Karnataka</option>
             </select>
             <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
@@ -162,8 +192,8 @@ export default function BuildingDetails({ onBack, onNavigate }) {
               required
             >
               <option value="" disabled>City</option>
-              <option value="city1">City 1</option>
-              <option value="city2">City 2</option>
+              <option value="Pune">Pune</option>
+              <option value="Mumbai">Mumbai</option>
             </select>
             <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
@@ -178,7 +208,7 @@ export default function BuildingDetails({ onBack, onNavigate }) {
             />
           </div>
 
-          <button type="submit" className="submit-btn">Add</button>
+          <button type="submit" className="submit-btn">{editData ? 'Update Building' : 'Add'}</button>
         </form>
       </main>
 

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './PropertyDetails.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
-import { db } from '../firebase.js'; // Ensure your firebase configuration path is correct
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { db } from '../firebase.js'; 
+import { collection, addDoc, getDocs, doc, updateDoc } from 'firebase/firestore';
 
-export default function PropertyDetails({ onBack, onNavigate }) {
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+export default function PropertyDetails({ onBack, onNavigate, editData }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [buildings, setBuildings] = useState([]);
+  const fileInputRef = useRef(null);
 
   // Form state fields matching inputs
   const [formData, setFormData] = useState({
@@ -21,8 +21,28 @@ export default function PropertyDetails({ onBack, onNavigate }) {
     parking: '',
     expectedMonthlyRental: '',
     expectedDeposit: '',
-    status: 'Vacant' // Default status for home page mapping
+    propertyPhoto: '',
+    status: 'Vacant'
   });
+
+  // Automatically fill the form if editData is passed
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        buildingOrComplex: editData.buildingOrComplex || '',
+        propertyType: editData.propertyType || '',
+        propertyName: editData.propertyName || '',
+        propertyId: editData.propertyId || '',
+        area: editData.area || '',
+        meterNumber: editData.meterNumber || '',
+        parking: editData.parking || '',
+        expectedMonthlyRental: editData.expectedMonthlyRental || '',
+        expectedDeposit: editData.expectedDeposit || '',
+        propertyPhoto: editData.propertyPhoto || '',
+        status: editData.status || 'Vacant'
+      });
+    }
+  }, [editData]);
 
   // Fetch buildings from Firestore on mount to populate dropdown
   useEffect(() => {
@@ -47,19 +67,48 @@ export default function PropertyDetails({ onBack, onNavigate }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle photo file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, propertyPhoto: file.name }));
+    }
+  };
+
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Handle form submission to Firebase Firestore (supports Add & Edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'properties'), {
-        ...formData,
-        createdAt: new Date()
-      });
-      alert('Property details successfully added to Firebase!');
+      if (editData && editData.id) {
+        // Update existing property record
+        const docRef = doc(db, 'properties', editData.id);
+        await updateDoc(docRef, {
+          ...formData,
+          updatedAt: new Date()
+        });
+        alert('Property details updated successfully!');
+      } else {
+        // Add new property record
+        await addDoc(collection(db, 'properties'), {
+          ...formData,
+          createdAt: new Date()
+        });
+        alert('Property details successfully added to Firebase!');
+      }
+
       if (onBack) {
         onBack();
+      } else if (onNavigate) {
+        onNavigate('home');
       }
     } catch (error) {
-      console.error("Error adding property document: ", error);
+      console.error("Error saving property document: ", error);
       alert('Failed to save property details.');
     }
   };
@@ -73,7 +122,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
         </div>
         <div className="nav-right-icons">
           <div className="search-box">
-            <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
+            <span className="search-icon"><img src='images/Vector.png' alt="Search" /></span>
             <input type="text" placeholder="Search" />
           </div>
           <button 
@@ -103,9 +152,9 @@ export default function PropertyDetails({ onBack, onNavigate }) {
       <main className="property-content">
         <div className="form-header">
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>Property or Unit Details</h2>
+          <h2>{editData ? 'Edit Property Details' : 'Property or Unit Details'}</h2>
         </div>
-        <hr></hr>
+        <hr />
 
         <form className="property-form" onSubmit={handleSubmit}>
           <div className="form-group select-group red-dropdown">
@@ -122,7 +171,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
                 </option>
               ))}
             </select>
-            <span className="dropdown-arrow white-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <span className="dropdown-arrow white-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
 
           <div className="form-group select-group">
@@ -136,7 +185,7 @@ export default function PropertyDetails({ onBack, onNavigate }) {
               <option value="Flat">Flat</option>
               <option value="Commercial">Commercial</option>
             </select>
-            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
 
           <div className="form-group">
@@ -211,21 +260,35 @@ export default function PropertyDetails({ onBack, onNavigate }) {
             />
           </div>
 
+          {/* Hidden File Input for Property Photo Upload */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            accept="image/*" 
+            onChange={handleFileChange} 
+          />
+
           {/* Property Photo Section */}
           <div className="photo-section-card">
-            <label className="photo-label">Property Photo</label>
+            <label className="photo-label">
+              Property Photo {formData.propertyPhoto && `(${formData.propertyPhoto})`}
+            </label>
             <div className="photo-grid">
-              {[1].map((_, index) => (
-                <div className="photo-upload-box" key={index}>
-                  <button type="button" className="upload-icon-btn" aria-label="Upload Photo">
-                    <img src="/images/Group.png" alt="Upload"></img>
-                  </button>
-                </div>
-              ))}
+              <div className="photo-upload-box">
+                <button 
+                  type="button" 
+                  className="upload-icon-btn" 
+                  aria-label="Upload Photo"
+                  onClick={handleUploadClick}
+                >
+                  <img src="/images/Group.png" alt="Upload" />
+                </button>
+              </div>
             </div>
           </div>
 
-          <button type="submit" className="submit-btn">Add</button>
+          <button type="submit" className="submit-btn">{editData ? 'Update Property' : 'Add'}</button>
         </form>
       </main>
 

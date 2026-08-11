@@ -3,62 +3,143 @@ import './TenantHistory.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js'; 
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
+import jsPDF from 'jspdf';
 
 export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Dropdown filter states
+  const [propertiesList, setPropertiesList] = useState([]);
+  const [buildingsList, setBuildingsList] = useState([]);
+  const [unitsList, setUnitsList] = useState([]);
+  
+  const [selectedBuilding, setSelectedBuilding] = useState('');
+  const [currentUnitId, setCurrentUnitId] = useState(selectedUnitId || '101');
+
   const [unitData, setUnitData] = useState(null);
   const [tenantData, setTenantData] = useState(null);
-  const [historyData, setHistoryData] = useState([]);
+  const [allHistoryData, setAllHistoryData] = useState([]);
+  const [filteredHistoryData, setFilteredHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch unit details, tenant data, and transaction history from Firestore
+  // Year filter states
+  const [selectedYear, setSelectedYear] = useState('All');
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+  const availableYears = ['All', '2026', '2025', '2024', '2023'];
+
+  // 1. Fetch available properties/units on mount to populate selectors
+  useEffect(() => {
+    const fetchPropertiesDropdown = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'properties'));
+        const props = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setPropertiesList(props);
+
+        const uniqueBuildings = [...new Set(props.map(item => item.buildingOrComplex).filter(Boolean))];
+        setBuildingsList(uniqueBuildings);
+
+        const uniqueUnits = [...new Set(props.map(item => item.propertyName || item.unitId).filter(Boolean))];
+        setUnitsList(uniqueUnits);
+
+        if (!currentUnitId && uniqueUnits.length > 0) {
+          setCurrentUnitId(uniqueUnits[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching properties filter list:', error);
+      }
+    };
+
+    fetchPropertiesDropdown();
+  }, []);
+
+  // 2. Fetch Unit Data, Tenant Data, and History whenever currentUnitId changes
   useEffect(() => {
     const fetchHistoryDetails = async () => {
+      if (!currentUnitId) return;
+      setLoading(true);
       try {
-        const unitQueryId = selectedUnitId || '101';
+        console.log("Fetching history for unit:", currentUnitId);
 
-        // 1. Fetch Unit Information
+        // Fetch Property / Unit Data
         const propertiesRef = collection(db, 'properties');
-        const propQuery = query(propertiesRef, where('propertyName', '==', unitQueryId));
-        const propSnapshot = await getDocs(propQuery);
-        
+        const propSnapshot = await getDocs(propertiesRef);
         let currentUnit = null;
-        if (!propSnapshot.empty) {
-          currentUnit = propSnapshot.docs[0].data();
-          setUnitData(currentUnit);
+        propSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.propertyName === currentUnitId || data.propertyId === currentUnitId || docSnap.id === currentUnitId) {
+            currentUnit = data;
+          }
+        });
+        setUnitData(currentUnit);
+        if (currentUnit?.buildingOrComplex) {
+          setSelectedBuilding(currentUnit.buildingOrComplex);
         }
 
-        // 2. Fetch Tenant Information linked to this unit
+        // Fetch Tenant Data
         const tenantsRef = collection(db, 'tenants');
-        const tenantQuery = query(tenantsRef, where('propertyOrUnit', '==', unitQueryId));
-        const tenantSnapshot = await getDocs(tenantQuery);
-
+        const tenantSnapshot = await getDocs(tenantsRef);
         let currentTenant = null;
-        if (!tenantSnapshot.empty) {
-          currentTenant = tenantSnapshot.docs[0].data();
-          setTenantData(currentTenant);
+        tenantSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (
+            data.propertyOrUnit === currentUnitId || 
+            data.unitId === currentUnitId || 
+            data.propertyName === currentUnitId
+          ) {
+            currentTenant = data;
+          }
+        });
+        setTenantData(currentTenant);
+
+        // Fetch Real History / Payments from Firestore
+        let fetchedPayments = [];
+        const collectionsToTry = ['payments', 'transactions', 'history'];
+        
+        for (const colName of collectionsToTry) {
+          try {
+            const colRef = collection(db, colName);
+            const snapshot = await getDocs(colRef);
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              if (
+                data.propertyOrUnit === currentUnitId || 
+                data.unitId === currentUnitId || 
+                data.propertyName === currentUnitId ||
+                data.unit === currentUnitId
+              ) {
+                const itemDateStr = data.date || data.createdAt?.toDate?.()?.toLocaleDateString() || '01/03/2026';
+                
+                let itemYear = '2026';
+                if (itemDateStr.includes('/')) {
+                  const parts = itemDateStr.split('/');
+                  if (parts.length === 3) {
+                    itemYear = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+                  }
+                } else if (itemDateStr.length >= 4) {
+                  itemYear = itemDateStr.substring(0, 4);
+                }
+
+                fetchedPayments.push({
+                  title: data.title || data.paymentType || 'Payment',
+                  amount: data.amount || data.finalMonthlyRental || currentUnit?.expectedMonthlyRental || '0',
+                  date: itemDateStr,
+                  year: itemYear
+                });
+              }
+            });
+          } catch (err) {
+            console.log(`Collection ${colName} not queried or empty.`);
+          }
         }
 
-        // 3. Fetch Payment/Transaction History for this unit
-        const paymentsRef = collection(db, 'payments');
-        const paymentQuery = query(paymentsRef, where('propertyOrUnit', '==', unitQueryId));
-        const paymentSnapshot = await getDocs(paymentQuery);
-
-        if (!paymentSnapshot.empty) {
-          const payments = paymentSnapshot.docs.map(doc => doc.data());
-          setHistoryData(payments);
-        } else {
-          // Default fallback data if no payment records exist yet in Firestore
-          const defaultRent = currentUnit?.expectedMonthlyRental || currentUnit?.expectedMonthlyRental === 0 ? currentUnit.expectedMonthlyRental : '10,000';
-          setHistoryData([
-            { title: 'Deposit Pay', amount: `${defaultRent}/-`, date: '01/03/2026' },
-            { title: 'March 2026 Payment Pay', amount: `${defaultRent}/-`, date: '01/04/2026' },
-            { title: 'April 2026 Payment Pay', amount: `${defaultRent}/-`, date: '01/05/2026' },
-            { title: 'May 2026 Payment Pay', amount: `${defaultRent}/-`, date: '01/06/2026' },
-            { title: 'June 2026 Payment Pay', amount: `${defaultRent}/-`, date: '01/07/2026' },
-          ]);
+        if (fetchedPayments.length === 0) {
+          fetchedPayments = [
+            { title: 'Monthly Rent', amount: currentUnit?.expectedMonthlyRental || currentTenant?.totalMonthlyRental || '10,000', date: '01/03/2026', year: '2026' }
+          ];
         }
+
+        setAllHistoryData(fetchedPayments);
       } catch (error) {
         console.error('Error fetching tenant history details: ', error);
       } finally {
@@ -67,7 +148,77 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     };
 
     fetchHistoryDetails();
-  }, [selectedUnitId]);
+  }, [currentUnitId]);
+
+  // 3. Filter history by selected year
+  useEffect(() => {
+    if (selectedYear === 'All') {
+      setFilteredHistoryData(allHistoryData);
+    } else {
+      const filtered = allHistoryData.filter(item => item.year === selectedYear);
+      setFilteredHistoryData(filtered);
+    }
+  }, [allHistoryData, selectedYear]);
+
+  // Handle Building Filter Change
+  const handleBuildingChange = (e) => {
+    const bldg = e.target.value;
+    setSelectedBuilding(bldg);
+    const matchingUnits = propertiesList.filter(p => !bldg || p.buildingOrComplex === bldg);
+    if (matchingUnits.length > 0) {
+      setCurrentUnitId(matchingUnits[0].propertyName || matchingUnits[0].unitId);
+    }
+  };
+
+  // Handle Unit Filter Change
+  const handleUnitChange = (e) => {
+    setCurrentUnitId(e.target.value);
+  };
+
+  // PDF Receipt Download Handler
+  const handleDownloadHistoryPDF = (item) => {
+    const docPdf = new jsPDF();
+    const unitName = currentUnitId;
+    const tenantName = tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige';
+
+    docPdf.setFontSize(18);
+    docPdf.setTextColor(179, 0, 0); 
+    docPdf.text('Transaction Receipt', 14, 20);
+
+    docPdf.setFontSize(10);
+    docPdf.setTextColor(100);
+    docPdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 27);
+
+    let startY = 40;
+    docPdf.setFontSize(11);
+
+    const details = [
+      { label: 'Unit / Property', value: unitName },
+      { label: 'Tenant Name', value: tenantName },
+      { label: 'Transaction Type', value: item.title },
+      { label: 'Amount Paid', value: `Rs. ${item.amount}` },
+      { label: 'Date', value: item.date },
+      { label: 'Status', value: 'Success / Completed' }
+    ];
+
+    details.forEach((detail) => {
+      docPdf.setTextColor(100, 100, 100);
+      docPdf.text(`${detail.label}:`, 14, startY);
+      docPdf.setTextColor(20, 20, 20);
+      docPdf.text(String(detail.value), 70, startY);
+      docPdf.setDrawColor(220, 220, 220);
+      docPdf.line(14, startY + 3, 196, startY + 3);
+      startY += 10;
+    });
+
+    docPdf.save(`${unitName}_${item.title.replace(/\s+/g, '_')}_Receipt.pdf`);
+  };
+
+  const handleViewHistoryItem = (item) => {
+    const unitName = currentUnitId;
+    const tenantName = tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige';
+    alert(`Transaction Details:\n\nUnit: ${unitName}\nTenant: ${tenantName}\nType: ${item.title}\nAmount: Rs.${item.amount}\nDate: ${item.date}`);
+  };
 
   return (
     <div className="tenant-history-container">
@@ -81,47 +232,64 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
             <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button 
-            className="icon-btn notification-btn" 
-            aria-label="Notifications"
-            onClick={() => onNavigate('notifications')}
-          >
+          <button className="icon-btn notification-btn" aria-label="Notifications" onClick={() => onNavigate('notifications')}>
             <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
           </button>
-          <button 
-            className="icon-btn menu-btn" 
-            aria-label="Menu"
-            onClick={() => setIsMenuOpen(true)}
-          >
+          <button className="icon-btn menu-btn" aria-label="Menu" onClick={() => setIsMenuOpen(true)}>
             ☰
           </button>
         </div>
       </header>
 
-      <SideMenuDrawer 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-        onNavigate={onNavigate} 
-      />
+      <SideMenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} onNavigate={onNavigate} />
 
       {/* --- MAIN CONTENT --- */}
       <main className="tenant-history-content">
-        <div className="form-header" style={{ marginBottom: "5px" }}>
-          <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>{unitData?.propertyName || '101'} Unit History</h2>
+        <div className="form-header" style={{ marginBottom: "5px", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
+            <h2>{currentUnitId} Unit History</h2>
+          </div>
+
+          {/* Property & Unit Selector Filters */}
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <select 
+              value={selectedBuilding} 
+              onChange={handleBuildingChange}
+              style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '4px', border: '1px solid #d8d0d0', color: '#b30000', background: '#e7e1e1' }}
+            >
+              <option value="">All Buildings</option>
+              {buildingsList.map((bldg, idx) => (
+                <option key={idx} value={bldg}>{bldg}</option>
+              ))}
+            </select>
+
+            <select 
+              value={currentUnitId} 
+              onChange={handleUnitChange}
+              style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '4px', border: '1px solid #b30000', background: '#b30000', color: '#fff', fontWeight: 'bold' }}
+            >
+              {propertiesList
+                .filter(p => !selectedBuilding || p.buildingOrComplex === selectedBuilding)
+                .map((prop, idx) => {
+                  const unitVal = prop.propertyName || prop.unitId;
+                  return <option key={idx} value={unitVal}>Unit {unitVal}</option>;
+                })}
+            </select>
+          </div>
         </div>
         <hr />
 
         {/* UNIT INFO CARD */}
         <div className="unit-info-card">
           <div className="unit-info-top" style={{ textAlign: "left", marginBottom: '-10px' }}>
-            <span className="bldg-name">{unitData?.buildingOrComplex || 'Building Name'}</span>
+            <span className="bldg-name">{unitData?.buildingOrComplex || tenantData?.buildingOrComplex || selectedBuilding || 'Building Name'}</span>
           </div>
           <div className="unit-info-body">
             <div>
-              <h3 className="unit-title-no">{unitData?.propertyName || '101'}</h3>
+              <h3 className="unit-title-no">{currentUnitId}</h3>
               <p className="tenant-fullname">
-                {tenantData ? `${tenantData.name} ${tenantData.surname || ''}` : 'Sandeep Ghige'}
+                {tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige'}
               </p>
             </div>
             <div className="unit-info-badges">
@@ -130,44 +298,83 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
               </span>
               <span className="badge-tag1 flat1">{unitData?.propertyType || 'Flat'}</span>
               <span className="badge-tag occupied" style={{ fontSize: '9px' }}> 
-                Tenant ID : {tenantData?.tenantId || '0987654321'}
+                Tenant ID : {tenantData?.tenantId || 'N/A'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* HISTORY SECTION */}
+        {/* HISTORY SECTION WITH YEAR DROPDOWN */}
         <div className="history-section-header">
           <h3>History</h3>
-          <div className="year-dropdown">
-            <span>2026</span>
-            <span className="arrow" style={{ height: '20px' }}><img src='images/arrow.png' alt="Arrow"></img></span>
+          <div className="year-dropdown" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}>
+            <span>{selectedYear}</span>
+            <span className="arrow" style={{ height: '20px', marginLeft: '6px' }}><img src='images/arrow.png' alt="Arrow"></img></span>
+            
+            {isYearDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: '0',
+                background: '#fff',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                zIndex: 10,
+                width: '95px',
+                marginTop: '4px'
+              }}>
+                {availableYears.map((yr) => (
+                  <div 
+                    key={yr}
+                    onClick={() => { setSelectedYear(yr); setIsYearDropdownOpen(false); }}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      color: selectedYear === yr ? '#b30000' : '#333',
+                      fontWeight: selectedYear === yr ? 'bold' : 'normal',
+                      borderBottom: '1px solid #f0f0f0',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {yr}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         <div className="history-list">
           {loading ? (
             <p style={{ padding: '20px', textAlign: 'center' }}>Loading history...</p>
-          ) : (
-            historyData.map((item, index) => (
+          ) : filteredHistoryData.length > 0 ? (
+            filteredHistoryData.map((item, index) => (
               <div className="history-row" key={index}>
-                <div className="history-item-title">{item.title}</div>
+                <div className="history-item-title">
+                  {item.title} <span style={{ fontSize: '10px', color: '#888', marginLeft: '6px' }}>({item.year})</span>
+                </div>
                 <div className="history-item-details">
                   <span className="history-amount">Rs.{item.amount}</span>
                   <span className="history-date">{item.date}</span>
-                  <button className="action-eye-btn" aria-label="View"><img src="images/eye.png" alt="View"></img></button>
-                  <button className="action-download-btn" aria-label="Download"><img src="images/down.png" alt="Download"></img></button>
+                  <button className="action-eye-btn" aria-label="View" onClick={() => handleViewHistoryItem(item)}>
+                    <img src="images/eye.png" alt="View"></img>
+                  </button>
+                  <button className="action-download-btn" aria-label="Download" onClick={() => handleDownloadHistoryPDF(item)}>
+                    <img src="images/down.png" alt="Download"></img>
+                  </button>
                 </div>
               </div>
             ))
+          ) : (
+            <p style={{ padding: '25px', textAlign: 'center', color: '#777', fontSize: '13px' }}>
+              No history records found for {selectedYear} in unit {currentUnitId}.
+            </p>
           )}
         </div>
 
         {/* RECORD PAYMENT BUTTON */}
-        <button 
-          className="record-payment-btn1"
-          onClick={() => onNavigate('recordPayment')}
-        >
+        <button className="record-payment-btn1" onClick={() => onNavigate('recordPayment')}>
           Record Payment
         </button>
       </main>

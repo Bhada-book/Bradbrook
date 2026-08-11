@@ -5,9 +5,7 @@
 .tenant-history-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background-image: url("/images/back.png");
-  padding-bottom: 90px;
+
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 

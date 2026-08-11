@@ -13,6 +13,8 @@
     "@capacitor/android": "^8.5.0",
     "@capacitor/camera": "^8.2.2",
     "firebase": "^12.17.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

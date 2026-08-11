@@ -3,7 +3,7 @@ import './TenantProfile.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
-import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, deleteDoc } from 'firebase/firestore';
 
 export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,39 +17,64 @@ export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
     const fetchTenantDetails = async () => {
       try {
         const unitQueryId = selectedUnitId || '101';
+        console.log("Searching for unit/tenant ID:", unitQueryId);
 
-        // 1. Fetch Tenant Information linked to this unit
+        // 1. Fetch all tenants and find matching unit or name client-side for robust matching
         const tenantsRef = collection(db, 'tenants');
-        const tenantQuery = query(tenantsRef, where('propertyOrUnit', '==', unitQueryId));
-        const tenantSnapshot = await getDocs(tenantQuery);
-
+        const tenantSnapshot = await getDocs(tenantsRef);
+        
         let currentTenant = null;
-        if (!tenantSnapshot.empty) {
-          currentTenant = { id: tenantSnapshot.docs[0].id, ...tenantSnapshot.docs[0].data() };
+        tenantSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          // Check against multiple potential property mapping keys
+          if (
+            data.propertyOrUnit === unitQueryId || 
+            data.propertyUnit === unitQueryId || 
+            data.propertyName === unitQueryId ||
+            docSnap.id === unitQueryId
+          ) {
+            currentTenant = { id: docSnap.id, ...data };
+          }
+        });
+
+        if (currentTenant) {
+          console.log("Found cloud tenant data:", currentTenant);
           setTenantData(currentTenant);
+        } else {
+          console.warn("No tenant found matching query ID in cloud.");
         }
 
-        // 2. Fetch Unit Information
+        // 2. Fetch Unit Information similarly
         const propertiesRef = collection(db, 'properties');
-        const propQuery = query(propertiesRef, where('propertyName', '==', unitQueryId));
-        const propSnapshot = await getDocs(propQuery);
+        const propSnapshot = await getDocs(propertiesRef);
         
         let currentUnit = null;
-        if (!propSnapshot.empty) {
-          currentUnit = propSnapshot.docs[0].data();
+        propSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.propertyName === unitQueryId || docSnap.id === unitQueryId) {
+            currentUnit = data;
+          }
+        });
+
+        if (currentUnit) {
           setUnitData(currentUnit);
         }
 
         // 3. Fetch Transaction History
         const paymentsRef = collection(db, 'payments');
-        const paymentQuery = query(paymentsRef, where('propertyOrUnit', '==', unitQueryId));
-        const paymentSnapshot = await getDocs(paymentQuery);
+        const paymentSnapshot = await getDocs(paymentsRef);
+        const payments = [];
+        paymentSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.propertyOrUnit === unitQueryId || data.unitId === unitQueryId) {
+            payments.push(data);
+          }
+        });
 
-        if (!paymentSnapshot.empty) {
-          const payments = paymentSnapshot.docs.map(doc => doc.data());
+        if (payments.length > 0) {
           setHistoryData(payments);
         } else {
-          const defaultRent = currentUnit?.expectedMonthlyRental || currentTenant?.totalMonthlyRental || '00,000';
+          const defaultRent = currentUnit?.expectedMonthlyRental || currentTenant?.totalMonthlyRental || '10,000';
           setHistoryData([
             { title: 'Deposit Pay', amount: `${defaultRent}/-`, date: '01/03/2026' },
             { title: 'March 2026 Payment Pay', amount: `${defaultRent}/-`, date: '01/04/2026' },
@@ -131,7 +156,7 @@ export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
       <main className="tenant-profile-content">
         <div className="form-header" style={{ marginBottom: '9px' }}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>{unitData?.propertyName || '101'} Tenant</h2>
+          <h2>{unitData?.propertyName || selectedUnitId || '101'} Tenant</h2>
         </div>
         <hr />
 
@@ -143,13 +168,13 @@ export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
             <div className="profile-card-header">
               <div className="profile-title-group" style={{ textAlign: 'left' }}>
                 <span className="building-name-small" style={{ marginBottom: '-7px' }}>
-                  {unitData?.buildingOrComplex || 'Building Name'}
+                  {unitData?.buildingOrComplex || tenantData?.buildingOrComplex || 'Building Name'}
                 </span>
                 <div className="profile-title-row" style={{ marginBottom: '-7px' }}>
-                  <h3>{unitData?.propertyName || '101'}</h3>
+                  <h3>{unitData?.propertyName || tenantData?.propertyOrUnit || '101'}</h3>
                 </div>
                 <span className="tenant-name-main">
-                  {tenantData ? `${tenantData.name} ${tenantData.surname || ''}` : 'Sandeep Ghige'}
+                  {tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'No Tenant Assigned'}
                 </span>
               </div>
 
@@ -160,7 +185,7 @@ export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
                 <div className="tenant-id-wrapper">
                   <span className="badge-overdue">● {tenantData?.paymentStatus || 'Overdue'}</span>
                   <span className="badge-flat">{unitData?.propertyType || 'Flat'}</span>
-                  <p className="tenant-id-text">Tenant ID : {tenantData?.tenantId || '0987654321'}</p>
+                  <p className="tenant-id-text">Tenant ID : {tenantData?.tenantId || 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -168,28 +193,28 @@ export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
             <div className="profile-info-grid">
               <div className="info-column">
                 <h4>Personal Information</h4>
-                <p><strong>Mobile :</strong> {tenantData?.mobile || '0987654321'}</p>
-                <p><strong>Company Name :</strong> {tenantData?.companyName || 'XYZ'}</p>
-                <p><strong>E-mail :</strong> {tenantData?.email || 'xyz@gmail.com'}</p>
-                <p><strong>Permanent Address :</strong> {tenantData?.permanentAddress || 'Flat 01'}</p>
-                <p><strong>State :</strong> {tenantData?.state || 'Maharashtra'}</p>
-                <p><strong>City :</strong> {tenantData?.city || 'Pune'}</p>
-                <p><strong>Pin Code :</strong> {tenantData?.pinCode || '411035'}</p>
-                <p><strong>Document :</strong> {tenantData?.document || '(Adhaar/Pan/DL)'}</p>
+                <p><strong>Mobile :</strong> {tenantData?.mobile || 'N/A'}</p>
+                <p><strong>Company Name :</strong> {tenantData?.companyName || 'N/A'}</p>
+                <p><strong>E-mail :</strong> {tenantData?.email || 'N/A'}</p>
+                <p><strong>Permanent Address :</strong> {tenantData?.permanentAddress || 'N/A'}</p>
+                <p><strong>State :</strong> {tenantData?.state || 'N/A'}</p>
+                <p><strong>City :</strong> {tenantData?.city || 'N/A'}</p>
+                <p><strong>Pin Code :</strong> {tenantData?.pinCode || 'N/A'}</p>
+                <p><strong>Document :</strong> {tenantData?.document || 'N/A'}</p>
               </div>
 
               <div className="info-column">
                 <h4>Commercial Information</h4>
-                <p><strong>Move IN Date :</strong> {tenantData?.moveInDate || '01/02/2026'}</p>
-                <p><strong>Security Deposit :</strong> {tenantData?.securityDeposit || '00,000'}</p>
-                <p><strong>Final Monthly Rental :</strong> {tenantData?.finalMonthlyRental || '00,000'}</p>
-                <p><strong>Maintenance Cost :</strong> {tenantData?.maintenanceCost || '000'}</p>
-                <p><strong>Total Monthly Rental :</strong> {tenantData?.totalMonthlyRental || '00,000'}</p>
-                <p><strong>Parking :</strong> {tenantData?.parking || 'Two wheeler + Four wheeler'}</p>
-                <p><strong>Monthly Payment :</strong> {tenantData?.monthlyPayment || 'Advance'}</p>
-                <p><strong>Agreement Copy :</strong> {tenantData?.agreementCopy || '(PDF/JPG)'}</p>
-                <p><strong>Agreement End Date :</strong> {tenantData?.agreementEndDate || '01/02/2026'}</p>
-                <p><strong>Yearly Hike :</strong> {tenantData?.yearlyHike ? `${tenantData.yearlyHike}%` : '5%'}</p>
+                <p><strong>Move IN Date :</strong> {tenantData?.moveInDate || 'N/A'}</p>
+                <p><strong>Security Deposit :</strong> {tenantData?.securityDeposit || 'N/A'}</p>
+                <p><strong>Final Monthly Rental :</strong> {tenantData?.finalMonthlyRental || 'N/A'}</p>
+                <p><strong>Maintenance Cost :</strong> {tenantData?.maintenanceCost || 'N/A'}</p>
+                <p><strong>Total Monthly Rental :</strong> {tenantData?.totalMonthlyRental || 'N/A'}</p>
+                <p><strong>Parking :</strong> {tenantData?.parking || 'N/A'}</p>
+                <p><strong>Monthly Payment :</strong> {tenantData?.monthlyPayment || 'N/A'}</p>
+                <p><strong>Agreement Copy :</strong> {tenantData?.agreementCopy || 'N/A'}</p>
+                <p><strong>Agreement End Date :</strong> {tenantData?.agreementEndDate || 'N/A'}</p>
+                <p><strong>Yearly Hike :</strong> {tenantData?.yearlyHike ? `${tenantData.yearlyHike}%` : 'N/A'}</p>
               </div>
             </div>
 

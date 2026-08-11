@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './AddManager.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 
-export default function AddManager({ onBack, onNavigate }) {
+export default function AddManager({ onBack, onNavigate, editData }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const fileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
@@ -19,29 +21,76 @@ export default function AddManager({ onBack, onNavigate }) {
     document: ''
   });
 
+  // Automatically fill the form when editData is passed
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        name: editData.name || '',
+        surname: editData.surname || '',
+        mobile: editData.mobile || '',
+        email: editData.email || '',
+        permanentAddress: editData.permanentAddress || '',
+        state: editData.state || '',
+        city: editData.city || '',
+        pinCode: editData.pinCode || '',
+        document: editData.document || ''
+      });
+    }
+  }, [editData]);
+
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'file' ? files[0]?.name || '' : value
+      [name]: value
     }));
+  };
+
+  // Handle file selection from the hidden file input
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        document: file.name
+      }));
+    }
+  };
+
+  // Trigger hidden file input click when upload button is clicked
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'managers'), {
-        ...formData,
-        createdAt: new Date()
-      });
-      alert('Manager added successfully to Firebase!');
+      if (editData && editData.id) {
+        // Update existing record in Firestore
+        const docRef = doc(db, editData.collectionName || 'managers', editData.id);
+        await updateDoc(docRef, {
+          ...formData,
+          updatedAt: new Date()
+        });
+        alert('Manager updated successfully!');
+      } else {
+        // Add new record
+        await addDoc(collection(db, 'managers'), {
+          ...formData,
+          createdAt: new Date()
+        });
+        alert('Manager added successfully to Firebase!');
+      }
+
       if (onBack) {
         onBack();
       } else if (onNavigate) {
-        onNavigate('home');
+        onNavigate('profile');
       }
     } catch (error) {
-      console.error('Error adding manager document: ', error);
+      console.error('Error saving manager document: ', error);
       alert('Failed to save manager details.');
     }
   };
@@ -85,7 +134,7 @@ export default function AddManager({ onBack, onNavigate }) {
       <main className="building-content">
         <div className="form-header" style={{ display: 'flex', alignItems: 'center' }}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>Add Manager</h2>
+          <h2>{editData ? 'Edit Manager' : 'Add Manager'}</h2>
         </div>
         <hr />
 
@@ -155,7 +204,7 @@ export default function AddManager({ onBack, onNavigate }) {
               <option value="maharashtra">Maharashtra</option>
               <option value="karnataka">Karnataka</option>
             </select>
-            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
 
           <div className="form-group select-group">
@@ -169,7 +218,7 @@ export default function AddManager({ onBack, onNavigate }) {
               <option value="pune">Pune</option>
               <option value="mumbai">Mumbai</option>
             </select>
-            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <span className="dropdown-arrow" style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
           </div>
 
           <div className="form-group">
@@ -182,6 +231,15 @@ export default function AddManager({ onBack, onNavigate }) {
             />
           </div>
 
+          {/* Hidden File Input for Image/Document Upload */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            accept="image/*,.pdf" 
+            onChange={handleFileChange} 
+          />
+
           <div className="form-group file-upload-group">
             <input 
               type="text" 
@@ -189,12 +247,17 @@ export default function AddManager({ onBack, onNavigate }) {
               value={formData.document}
               readOnly 
             />
-            <button type="button" className="upload-icon-btn" aria-label="Upload Document">
-              <img src="images/Group5.png" alt="Upload"></img>
+            <button 
+              type="button" 
+              className="upload-icon-btn" 
+              aria-label="Upload Document"
+              onClick={handleUploadClick}
+            >
+              <img src="images/Group5.png" alt="Upload" />
             </button>
           </div>
 
-          <button type="submit" className="submit-btn">Add Manager</button>
+          <button type="submit" className="submit-btn">{editData ? 'Update Manager' : 'Add Manager'}</button>
         </form>
       </main>
 
