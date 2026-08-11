@@ -4,9 +4,11 @@
   padding: 0;
   box-sizing: border-box;
 }
-
+.body {
+  font-family: Arial, Helvetica;
+}
 body {
- font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
   background-image: url("/images/back.png");
   background-size: cover;
   background-position: center;
@@ -49,7 +51,7 @@ body {
 }
 
 .title-english {
-  font-family: serif;
+  font-family: Arial;
   font-size: 42px;
   line-height: 1.1;
   font-weight: bold;
@@ -76,7 +78,7 @@ body {
 }
 
 .title-hindi {
-  font-family: serif;
+  font-family: Arial;
   font-size: 20px;
   color: #ffdf77;
 }
@@ -92,7 +94,7 @@ body {
 
 .badge-top {
   display: block;
-  font-family: serif;
+  font-family: Arial;
   font-size: 18px;
   font-weight: bold;
   color: #ffdf77;
@@ -101,7 +103,7 @@ body {
 
 .badge-bottom {
   display: block;
-  font-family: serif;
+  font-family: Arial;
   font-size: 11px;
   color: #d8a335;
 }

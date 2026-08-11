@@ -1,12 +1,12 @@
 /* Tenant History Container */
-.body{
-  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.body {
+  font-family: Arial, Helvetica;
 }
 .tenant-history-container {
   display: flex;
   flex-direction: column;
 
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial;
 }
 
 /* Content Area */

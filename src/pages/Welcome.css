@@ -4,9 +4,12 @@
   padding: 0;
   box-sizing: border-box;
 }
+.body {
+  font-family: Arial, Helvetica;
+}
 
 body {
-font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
   background-color: #f4f6f9;
   color: #333;
   overflow-x: hidden;
@@ -45,7 +48,7 @@ font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .title-english {
-  font-family: serif;
+  font-family: Arial;
   font-size: 52px;
   line-height: 1.1;
   font-weight: bold;
@@ -71,7 +74,7 @@ font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .title-hindi {
-  font-family: serif;
+  font-family: Arial;
   font-size: 26px;
   color: #ffdf77;
   text-shadow: 0 0 8px rgba(255, 223, 119, 0.5);
@@ -91,7 +94,7 @@ font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .golden-bh {
-  font-family: serif;
+  font-family: Arial;
   font-size: 110px;
   background: linear-gradient(180deg, #ffdf77 0%, #d8a335 50%, #b87912 100%);
   -webkit-background-clip: text;
@@ -103,7 +106,7 @@ font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
 
 .logo-text-top {
-  font-family: serif;
+  font-family: Arial;
   font-size: 22px;
   font-weight: bold;
   color: #ffdf77;
@@ -112,7 +115,7 @@ margin-bottom: -130px;
 }
 
 .logo-text-bottom {
-  font-family: serif;
+  font-family: Arial;
   font-size: 13px;
   color: #d8a335;
   margin-top: 2px;

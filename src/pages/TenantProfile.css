@@ -1,5 +1,5 @@
-.body{
-  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.body {
+  font-family: Arial, Helvetica;
 }
 .tenant-profile-container {
   display: flex;
@@ -7,7 +7,7 @@
   min-height: 100vh;
   background-image: url("/images/back.png");
   padding-bottom: 90px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial;
 }
 
 .tenant-profile-content {

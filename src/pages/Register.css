@@ -1,5 +1,5 @@
-.body{
-  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.body {
+  font-family: Arial, Helvetica;
 }
 .register-page-container {
   min-height: 100vh;
@@ -47,7 +47,7 @@
 
 .badge-top {
   display: block;
-  font-family: serif;
+  font-family: Arial;
   font-size: 18px;
   font-weight: bold;
   color: #ffdf77;
@@ -56,7 +56,7 @@
 
 .badge-bottom {
   display: block;
-  font-family: serif;
+  font-family: Arial;
   font-size: 11px;
   color: #d8a335;
 }

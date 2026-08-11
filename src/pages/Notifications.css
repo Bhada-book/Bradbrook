@@ -1,12 +1,13 @@
-.body{
-  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}.notifications-container {
+.body {
+  font-family: Arial, Helvetica;
+}
+.notifications-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   background-color: #f7f5f0;
   padding-bottom: 90px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial;
 }
 
 .notifications-content {
