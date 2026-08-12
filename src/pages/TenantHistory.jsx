@@ -3,8 +3,9 @@ import './TenantHistory.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js'; 
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import jsPDF from 'jspdf';
+import { handleRoleBasedDelete } from '../approvalHelper'; // Optional: Use if deleting elements here
 
 export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,17 +24,33 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
   const [filteredHistoryData, setFilteredHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Profile expand/collapse toggle state
+  const [isProfileExpanded, setIsProfileExpanded] = useState(true);
+
   // Year filter states
   const [selectedYear, setSelectedYear] = useState('All');
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const availableYears = ['All', '2026', '2025', '2024', '2023'];
 
-  // 1. Fetch available properties/units on mount to populate selectors
+  // Check user role for permissions (Admin vs Collector vs Manager)
+  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
+  const isAdmin = userRole === 'Admin/Landlord';
+
+  // 1. Fetch available properties/units on mount with Collector Property Restrictions
   useEffect(() => {
     const fetchPropertiesDropdown = async () => {
       try {
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const allowedProps = userData.allowedProperties || []; // Properties allowed by Admin for Collector
+
         const querySnapshot = await getDocs(collection(db, 'properties'));
-        const props = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let props = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // IF COLLECTOR: Filter list to only show properties permitted by the admin[cite: 12]
+        if (userRole === 'Collector') {
+          props = props.filter(p => allowedProps.includes(p.propertyName) || allowedProps.includes(p.buildingOrComplex) || allowedProps.includes(p.propertyId));
+        }
+
         setPropertiesList(props);
 
         const uniqueBuildings = [...new Set(props.map(item => item.buildingOrComplex).filter(Boolean))];
@@ -51,7 +68,7 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     };
 
     fetchPropertiesDropdown();
-  }, []);
+  }, [userRole]);
 
   // 2. Fetch Unit Data, Tenant Data, and History whenever currentUnitId changes
   useEffect(() => {
@@ -59,9 +76,6 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
       if (!currentUnitId) return;
       setLoading(true);
       try {
-        console.log("Fetching history for unit:", currentUnitId);
-
-        // Fetch Property / Unit Data
         const propertiesRef = collection(db, 'properties');
         const propSnapshot = await getDocs(propertiesRef);
         let currentUnit = null;
@@ -76,7 +90,6 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
           setSelectedBuilding(currentUnit.buildingOrComplex);
         }
 
-        // Fetch Tenant Data
         const tenantsRef = collection(db, 'tenants');
         const tenantSnapshot = await getDocs(tenantsRef);
         let currentTenant = null;
@@ -87,12 +100,11 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
             data.unitId === currentUnitId || 
             data.propertyName === currentUnitId
           ) {
-            currentTenant = data;
+            currentTenant = { id: docSnap.id, ...data };
           }
         });
         setTenantData(currentTenant);
 
-        // Fetch Real History / Payments from Firestore
         let fetchedPayments = [];
         const collectionsToTry = ['payments', 'transactions', 'history'];
         
@@ -134,8 +146,10 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
         }
 
         if (fetchedPayments.length === 0) {
+          const defaultRent = currentUnit?.expectedMonthlyRental || currentTenant?.totalMonthlyRental || '10,000';
           fetchedPayments = [
-            { title: 'Monthly Rent', amount: currentUnit?.expectedMonthlyRental || currentTenant?.totalMonthlyRental || '10,000', date: '01/03/2026', year: '2026' }
+            { title: 'Deposit Pay', amount: defaultRent, date: '01/03/2026', year: '2026' },
+            { title: 'March 2026 Payment', amount: defaultRent, date: '01/04/2026', year: '2026' }
           ];
         }
 
@@ -160,7 +174,6 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     }
   }, [allHistoryData, selectedYear]);
 
-  // Handle Building Filter Change
   const handleBuildingChange = (e) => {
     const bldg = e.target.value;
     setSelectedBuilding(bldg);
@@ -170,12 +183,10 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     }
   };
 
-  // Handle Unit Filter Change
   const handleUnitChange = (e) => {
     setCurrentUnitId(e.target.value);
   };
 
-  // PDF Receipt Download Handler
   const handleDownloadHistoryPDF = (item) => {
     const docPdf = new jsPDF();
     const unitName = currentUnitId;
@@ -214,6 +225,62 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     docPdf.save(`${unitName}_${item.title.replace(/\s+/g, '_')}_Receipt.pdf`);
   };
 
+  const handleDownloadAllHistoryPDF = () => {
+    const docPdf = new jsPDF();
+    const unitName = currentUnitId;
+    const tenantName = tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige';
+
+    docPdf.setFontSize(18);
+    docPdf.setTextColor(179, 0, 0); 
+    docPdf.text(`Payment History Report - Unit ${unitName}`, 14, 20);
+
+    docPdf.setFontSize(10);
+    docPdf.setTextColor(100);
+    docPdf.text(`Tenant: ${tenantName} | Generated on: ${new Date().toLocaleDateString()}`, 14, 27);
+
+    let startY = 38;
+    docPdf.setFontSize(11);
+
+    filteredHistoryData.forEach((item, index) => {
+      if (startY > 270) {
+        docPdf.addPage();
+        startY = 20;
+      }
+
+      docPdf.setTextColor(179, 0, 0);
+      docPdf.text(`Record #${index + 1}: ${item.title}`, 14, startY);
+      startY += 6;
+
+      docPdf.setTextColor(80, 80, 80);
+      docPdf.text(`Amount: Rs. ${item.amount}  |  Date: ${item.date}  |  Year: ${item.year}`, 14, startY);
+      
+      docPdf.setDrawColor(220, 220, 220);
+      docPdf.line(14, startY + 4, 196, startY + 4);
+      startY += 10;
+    });
+
+    docPdf.save(`${unitName}_Complete_History_Report.pdf`);
+  };
+
+  // Role-based delete handler (Sends approval request if manager, deletes if admin)
+  const handleDeleteTenant = async () => {
+    if (!tenantData?.id) {
+      alert('No active tenant record found to delete.');
+      return;
+    }
+
+    const loggedInUser = JSON.parse(localStorage.getItem('userData') || '{}');
+    const tenantName = `${tenantData.name || ''} ${tenantData.surname || ''}`.trim();
+
+    await handleRoleBasedDelete(
+      userRole,
+      loggedInUser,
+      'tenants',
+      tenantData.id,
+      tenantName
+    );
+  };
+
   const handleViewHistoryItem = (item) => {
     const unitName = currentUnitId;
     const tenantName = tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige';
@@ -232,9 +299,14 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
             <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
             <input type="text" placeholder="Search" />
           </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications" onClick={() => onNavigate('notifications')}>
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
+
+          {/* NOTIFICATION BUTTON SHOWN ONLY TO ADMIN OWNER */}
+          {isAdmin && (
+            <button className="icon-btn notification-btn" aria-label="Notifications" onClick={() => onNavigate('adminApprovals')}>
+              <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+            </button>
+          )}
+
           <button className="icon-btn menu-btn" aria-label="Menu" onClick={() => setIsMenuOpen(true)}>
             ☰
           </button>
@@ -248,7 +320,7 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
         <div className="form-header" style={{ marginBottom: "5px", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-            <h2>{currentUnitId} Unit History</h2>
+            <h2>Tenant Profile</h2>
           </div>
 
           {/* Property & Unit Selector Filters */}
@@ -280,31 +352,75 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
         </div>
         <hr />
 
-        {/* UNIT INFO CARD */}
-        <div className="unit-info-card">
-          <div className="unit-info-top" style={{ textAlign: "left", marginBottom: '-10px' }}>
-            <span className="bldg-name">{unitData?.buildingOrComplex || tenantData?.buildingOrComplex || selectedBuilding || 'Building Name'}</span>
-          </div>
-          <div className="unit-info-body">
-            <div>
-              <h3 className="unit-title-no">{currentUnitId}</h3>
-              <p className="tenant-fullname">
-                {tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige'}
-              </p>
-            </div>
-            <div className="unit-info-badges">
-              <span className={`status-badge1 ${tenantData?.paymentStatus || 'overdue1'}`}>
-                ● {tenantData?.paymentStatus ? tenantData.paymentStatus.charAt(0).toUpperCase() + tenantData.paymentStatus.slice(1) : 'Overdue'}
-              </span>
-              <span className="badge-tag1 flat1">{unitData?.propertyType || 'Flat'}</span>
-              <span className="badge-tag occupied" style={{ fontSize: '9px' }}> 
-                Tenant ID : {tenantData?.tenantId || 'N/A'}
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* TENANT PROFILE CARD */}
+        {loading ? (
+          <p style={{ padding: '15px', textAlign: 'center' }}>Loading profile...</p>
+        ) : (
+          <div className="profile-details-card" style={{ marginBottom: '15px' }}>
+            <div className="profile-card-header">
+              <div className="profile-title-group" style={{ textAlign: 'left' }}>
+                <span className="building-name-small" style={{ marginBottom: '-7px' }}>
+                  {unitData?.buildingOrComplex || tenantData?.buildingOrComplex || selectedBuilding || 'Building Name'}
+                </span>
+                <div className="profile-title-row" style={{ marginBottom: '-7px' }}>
+                  <h3>{currentUnitId}</h3>
+                </div>
+                <span className="tenant-name-main">
+                  {tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige'}
+                </span>
+              </div>
 
-        {/* HISTORY SECTION WITH YEAR DROPDOWN */}
+              <div className="profile-top-right-group">
+                <div className="profile-top-badges">
+                  {userRole !== 'Collector' && (
+                    <button className="edit-profile-btn" aria-label="Edit Profile" onClick={() => onNavigate('tenant')}>
+                      <img src='images/edit.png' alt="Edit" />
+                    </button>
+                  )}
+                </div>
+                <div className="tenant-id-wrapper">
+                  <span className={`badge-overdue ${tenantData?.paymentStatus || 'overdue'}`}>
+                    ● {tenantData?.paymentStatus ? tenantData.paymentStatus.charAt(0).toUpperCase() + tenantData.paymentStatus.slice(1) : 'Overdue'}
+                  </span>
+                  <span className="badge-flat">{unitData?.propertyType || 'Flat'}</span>
+                  <p className="tenant-id-text">Tenant ID : {tenantData?.tenantId || '[Tenant Redacted]'}</p>
+                </div>
+              </div>
+            </div>
+
+            {isProfileExpanded && (
+              <div className="profile-info-grid">
+                <div className="info-column">
+                  <h4>Personal Information</h4>
+                  <p><strong>Mobile :</strong> {tenantData?.mobile || 'N/A'}</p>
+                  <p><strong>Company Name :</strong> {tenantData?.companyName || 'N/A'}</p>
+                  <p><strong>E-mail :</strong> {tenantData?.email || 'N/A'}</p>
+                  <p><strong>Permanent Address :</strong> {tenantData?.permanentAddress || 'N/A'}</p>
+                  <p><strong>State :</strong> {tenantData?.state || 'N/A'}</p>
+                  <p><strong>City :</strong> {tenantData?.city || 'N/A'}</p>
+                  <p><strong>Pin Code :</strong> {tenantData?.pinCode || 'N/A'}</p>
+                </div>
+
+                <div className="info-column">
+                  <h4>Commercial Information</h4>
+                  <p><strong>Move IN Date :</strong> {tenantData?.moveInDate || 'N/A'}</p>
+                  <p><strong>Security Deposit :</strong> {tenantData?.securityDeposit || 'N/A'}</p>
+                  <p><strong>Total Monthly Rental :</strong> {tenantData?.totalMonthlyRental || unitData?.expectedMonthlyRental || 'N/A'}</p>
+                  <p><strong>Parking :</strong> {tenantData?.parking || 'N/A'}</p>
+                  <p><strong>Monthly Payment :</strong> {tenantData?.monthlyPayment || 'N/A'}</p>
+                  <p><strong>Agreement End Date :</strong> {tenantData?.agreementEndDate || 'N/A'}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="show-less-bar" onClick={() => setIsProfileExpanded(!isProfileExpanded)} style={{ cursor: 'pointer' }}>
+              <span>{isProfileExpanded ? 'Show Less' : 'Show More'}</span>
+              <span className="arrow-up">{isProfileExpanded ? '▲' : '▼'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* HISTORY SECTION */}
         <div className="history-section-header">
           <h3>History</h3>
           <div className="year-dropdown" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}>
@@ -373,13 +489,24 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
           )}
         </div>
 
-        {/* RECORD PAYMENT BUTTON */}
-        <button className="record-payment-btn1" onClick={() => onNavigate('recordPayment')}>
-          Record Payment
-        </button>
+        {/* ACTION BUTTONS */}
+        <div className="profile-action-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px', marginBottom:'80px' }}>
+          <button className="download-tenant-btn" onClick={handleDownloadAllHistoryPDF}>
+            Download All History
+          </button>
+          
+          <button className="record-payment-btn" onClick={() => onNavigate('recordPayment')} style={{ marginTop: '0px' }}>
+            Record Payment
+          </button>
+
+          {userRole !== 'Collector' && (
+            <button className="delete-tenant-btn" onClick={handleDeleteTenant} style={{ background: '#b30000', color: '#fff', border: 'none', padding: '10px', cursor: 'pointer'}}>
+              Delete Tenant
+            </button>
+          )}
+        </div>
       </main>
 
-      {/* --- BOTTOM NAVIGATION & POPUP --- */}
       <BottomNavWithPopup onNavigate={onNavigate} currentActive="home" />
     </div>
   );

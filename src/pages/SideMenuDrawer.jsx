@@ -4,16 +4,40 @@ import './SideMenuDrawer.css';
 export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
   if (!isOpen) return null;
 
-  const menuOptions = [
+  // Retrieve user role to conditionally hide restricted menu items
+  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
+  const isCollector = userRole === 'Collector';
+
+  // Base menu options available to all roles
+  let menuOptions = [
     { name: 'Tenant History', page: 'history'},
     { name: 'Tenant List', page: 'tenantList' },
-    { name: 'Tenant Profile', page: 'profile'},
     { name: 'Unit Ledger / Payments', page: 'unit-ledger' },
-    { name: 'Admin Profile', page: 'adminProfile' },
-    { name: 'Add Manager', page: 'addManager'},
-    { name: 'Add Collector', page: 'addCollector'},
     { name: 'Overdue Details', page: 'overdue' },
   ];
+
+  // If the user is an Admin/Landlord or Manager, include administrative options
+  if (!isCollector) {
+    menuOptions.push(
+      { name: 'Admin Profile', page: 'adminProfile' },
+      { name: 'Add Manager', page: 'addManager' },
+      { name: 'Add Collector', page: 'addCollector' }
+    );
+  }
+const handleLogout = () => {
+    // Clear user role and session data from localStorage
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('allowedProperties');
+    
+    onClose();
+    
+    if (onNavigate) {
+      onNavigate('login'); // Triggers lowercase 'login'
+    } else {
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="side-menu-overlay" onClick={onClose}>
@@ -37,6 +61,16 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
               <span>{item.name}</span>
             </button>
           ))}
+
+          {/* Logout Menu Option */}
+          <button 
+            className="side-menu-item logout-item"
+            onClick={handleLogout}
+            style={{ color: '#352c2c' }}
+          >
+            <span></span>
+            <span>Logout</span>
+          </button>
         </div>
       </div>
     </div>

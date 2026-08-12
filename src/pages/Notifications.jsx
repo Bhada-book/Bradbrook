@@ -48,6 +48,8 @@ export default function Notifications({ onBack, onNavigate }) {
 
     return () => unsubscribe();
   }, []);
+  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
+  const isAdmin = userRole === 'Admin/Landlord';
 
   return (
     <div className="notifications-container">
@@ -56,22 +58,31 @@ export default function Notifications({ onBack, onNavigate }) {
         <div className="nav-logo-area">
           <img src="/images/logot.png" alt="Logo" className="nav-blogo" />
         </div>
-        <div className="nav-right-icons">
-          <div className="search-box">
-            <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
-            <input type="text" placeholder="Search" />
-          </div>
-          <button className="icon-btn notification-btn" aria-label="Notifications">
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
-          <button 
-            className="icon-btn menu-btn" 
-            aria-label="Menu"
-            onClick={() => setIsMenuOpen(true)}
-          >
-            ☰
-          </button>
-        </div>
+       <div className="nav-right-icons">
+    <div className="search-box">
+      <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
+      <input type="text" placeholder="Search" />
+    </div>
+
+    {/* SHOW NOTIFICATION BUTTON ONLY FOR ADMIN OWNER */}
+    {isAdmin && (
+      <button 
+        className="icon-btn notification-btn" 
+        aria-label="Notifications"
+        onClick={() => onNavigate('adminApprovals')}
+      >
+        <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
+      </button>
+    )}
+
+    <button 
+      className="icon-btn menu-btn" 
+      aria-label="Menu"
+      onClick={() => setIsMenuOpen(true)}
+    >
+      ☰
+    </button>
+  </div>
       </header>
 
       {/* --- SIDE MENU DRAWER --- */}

@@ -6,7 +6,7 @@ import {
   RecaptchaVerifier, 
   signInWithPhoneNumber 
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import './Login.css';
 
 export default function Login({ onLoginSuccess, onNavigateToRegister }) {
@@ -17,9 +17,8 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
   const [mobileError, setMobileError] = useState('');
   const [otpError, setOtpError] = useState('');
   const [confirmationResultObj, setConfirmationResultObj] = useState(null);
-  const [isTestMode, setIsTestMode] = useState(false); // Flag for test phone numbers
+  const [isTestMode, setIsTestMode] = useState(false);
 
-  // Initialize reCAPTCHA container for Phone Auth
   useEffect(() => {
     if (window.recaptchaVerifier) {
       window.recaptchaVerifier.clear();
@@ -39,7 +38,43 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
     };
   }, []);
 
-  // Handle Google / Gmail Login
+  // Helper function to find user role & profile across collections by mobile number
+  const identifyUserRoleAndSave = async (mobileNum) => {
+    let role = 'Admin/Landlord';
+    let profileData = { mobile: mobileNum };
+
+    // 1. Check 'users' (Admin)
+    const userRef = doc(db, 'users', mobileNum);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      role = 'Admin/Landlord';
+      profileData = { id: userSnap.id, ...userSnap.data() };
+    } else {
+      // 2. Check 'managers'
+      const managersRef = collection(db, 'managers');
+      const managerQuery = query(managersRef, where('mobile', '==', mobileNum));
+      const managerSnap = await getDocs(managerQuery);
+      if (!managerSnap.empty) {
+        role = 'Manager';
+        profileData = { id: managerSnap.docs[0].id, ...managerSnap.docs[0].data() };
+      } else {
+        // 3. Check 'collectors'
+        const collectorsRef = collection(db, 'collectors');
+        const collectorQuery = query(collectorsRef, where('mobile', '==', mobileNum));
+        const collectorSnap = await getDocs(collectorQuery);
+        if (!collectorSnap.empty) {
+          role = 'Collector';
+          profileData = { id: collectorSnap.docs[0].id, ...collectorSnap.docs[0].data() };
+        }
+      }
+    }
+
+    // Save session info to localStorage for global permission handling
+    localStorage.setItem('userRole', role);
+    localStorage.setItem('userData', JSON.stringify(profileData));
+    localStorage.setItem('allowedProperties', JSON.stringify(profileData.allowedProperties || []));
+  };
+
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -61,6 +96,7 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
         });
       }
 
+      localStorage.setItem('userRole', 'Admin/Landlord');
       onLoginSuccess();
     } catch (error) {
       console.error('Google login error: ', error);
@@ -68,7 +104,6 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
     }
   };
 
-  // Handle Sending Mobile OTP (Checks if registered in Firestore for 000000 bypass)
   const handleSendOtp = async () => {
     setMobileError('');
 
@@ -78,19 +113,25 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
     }
 
     try {
-      // Check if the number exists in your Firestore 'users' collection
-      const userRef = doc(db, 'users', mobile);
-      const userSnap = await getDoc(userRef);
+      let exists = false;
+      const userSnap = await getDoc(doc(db, 'users', mobile));
+      if (userSnap.exists()) exists = true;
+      else {
+        const mSnap = await getDocs(query(collection(db, 'managers'), where('mobile', '==', mobile)));
+        if (!mSnap.empty) exists = true;
+        else {
+          const cSnap = await getDocs(query(collection(db, 'collectors'), where('mobile', '==', mobile)));
+          if (!cSnap.empty) exists = true;
+        }
+      }
 
-      if (userSnap.exists()) {
-        // If registered in Firestore, enable test mode bypass with '000000'
+      if (exists) {
         setIsTestMode(true);
         setOtpSent(true);
         alert('Test mode active! Use OTP: 000000 to log in.');
         return;
       }
 
-      // Otherwise, proceed with standard Firebase Phone Authentication
       setIsTestMode(false);
       const phoneNumber = '+91' + mobile; 
       const appVerifier = window.recaptchaVerifier;
@@ -101,18 +142,10 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
       alert('OTP sent successfully to ' + mobile);
     } catch (error) {
       console.error('Error sending OTP code:', error);
-      
-      if (error.code === 'auth/quota-exceeded') {
-        setMobileError('SMS quota exceeded for today. Please try again tomorrow.');
-      } else if (error.code === 'auth/invalid-phone-number') {
-        setMobileError('The phone number format is invalid.');
-      } else {
-        setMobileError('Failed to send OTP: ' + error.message);
-      }
+      setMobileError('Failed to send OTP: ' + error.message);
     }
   };
 
-  // Handle OTP Verification & Login
   const handleLogin = async (e) => {
     e.preventDefault();
     let isValid = true;
@@ -131,10 +164,8 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
 
     try {
       if (isTestMode) {
-        // Bypass Firebase Auth confirmation step if test mode is enabled for registered users
         if (otp === '000000') {
-          const userRef = doc(db, 'users', mobile);
-          await updateDoc(userRef, { mobile: mobile });
+          await identifyUserRoleAndSave(mobile);
           onLoginSuccess();
           return;
         } else {
@@ -143,23 +174,8 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
         }
       }
 
-      // Standard Firebase OTP Confirmation flow
-      const result = await confirmationResultObj.confirm(otp);
-      const user = result.user;
-
-      const userRef = doc(db, 'users', mobile);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          uid: user.uid,
-          mobile: mobile,
-          createdAt: new Date()
-        });
-      } else {
-        await updateDoc(userRef, { mobile: mobile });
-      }
-
+      await confirmationResultObj.confirm(otp);
+      await identifyUserRoleAndSave(mobile);
       onLoginSuccess();
     } catch (error) {
       console.error('Invalid OTP: ', error);
@@ -181,19 +197,12 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
       </div>
 
       <div className="login-form-section">
-        
         <button className="google-btn" onClick={handleGoogleLogin} type="button">
-          <img 
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-            alt="Google logo" 
-            className="google-icon" 
-          />
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" className="google-icon" />
           <span>Continue with Google</span>
         </button>
 
-        <div className="divider">
-          <span>or</span>
-        </div>
+        <div className="divider"><span>or</span></div>
 
         <form onSubmit={handleLogin} className="auth-form">
           <div className="input-group">
@@ -225,28 +234,19 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
                   maxLength={6}
                   required
                 />
-                <button type="button" className="send-otp-btn" onClick={handleSendOtp}>
-                  Send OTP
-                </button>
+                <button type="button" className="send-otp-btn" onClick={handleSendOtp}>Send OTP</button>
               </div>
               {otpError && <span className="error-text">{otpError}</span>}
             </div>
           </div>
           
           <span className="resend-text" onClick={handleSendOtp}>Resend OTP</span>
-
-          <button type="submit" className="login-submit-btn">
-            Log In
-          </button>
+          <button type="submit" className="login-submit-btn">Log In</button>
         </form>
 
         <div className="signup-footer">
-          Don't have an account?{' '}
-          <span className="signup-link" onClick={onNavigateToRegister}>
-            Sign Up
-          </span>
+          Don't have an account? <span className="signup-link" onClick={onNavigateToRegister}>Sign Up</span>
         </div>
-
       </div>
     </div>
   );

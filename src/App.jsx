@@ -20,9 +20,10 @@ import AddManager from './pages/AddManager';
 import AddCollector from './pages/AddCollector';
 import Overdue from './pages/Overdue';
 import DocumentViewer from './pages/DocumentViewer';
+import AdminApprovalNotifications from './pages/AdminApprovalNotifications';
 
 function App() {
-  const [currentStep, setCurrentStep] = useState('welcome'); 
+  const [currentStep, setCurrentStep] = useState('welcome'); // 'welcome', 'login', 'register', 'dashboard'
   const [currentPage, setCurrentPage] = useState('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [editingTenantData, setEditingTenantData] = useState(null);
@@ -120,21 +121,53 @@ function App() {
           <Overdue onBack={() => setCurrentPage('home')} onNavigate={setCurrentPage} />
         )}
         {currentPage === 'documentViewer' && (
-  <DocumentViewer 
-    onBack={() => setCurrentPage('adminProfile')} 
-    onNavigate={setCurrentPage} 
-  />
-)}
+          <DocumentViewer 
+            onBack={() => setCurrentPage('adminProfile')} 
+            onNavigate={setCurrentPage} 
+          />
+        )}
+        {currentPage === 'adminApprovals' && (
+          <AdminApprovalNotifications 
+            onBack={() => setCurrentPage('adminProfile')} 
+            onNavigate={setCurrentPage} 
+          />
+        )}
+
         <SideMenuDrawer 
           isOpen={isMenuOpen} 
           onClose={() => setIsMenuOpen(false)} 
-          onNavigate={(page) => { setCurrentPage(page); setIsMenuOpen(false); }} 
+          onNavigate={(page) => { 
+            if (page === 'login') {
+              // Clear session storage values
+              localStorage.removeItem('userRole');
+              localStorage.removeItem('userData');
+              localStorage.removeItem('allowedProperties');
+              
+              // Shift App level step back to login screen
+              setCurrentStep('login');
+              setCurrentPage('home');
+            } else {
+              setCurrentPage(page); 
+            }
+            setIsMenuOpen(false); 
+          }} 
         />
       </div>
     );
   }
 
-  return null;
+  // Fallback view to completely prevent white/blank screens
+  return (
+    <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>
+      <h2>Session Ended or Page Not Found</h2>
+      <button 
+        onClick={() => { setCurrentStep('login'); setCurrentPage('home'); }}
+        style={{ marginTop: '15px', padding: '10px 20px', background: '#b30000', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+      >
+        Go to Login
+      </button>
+    </div>
+  );
 }
 
 export default App;

@@ -149,7 +149,7 @@ export default function BottomNavWithPopup({ onNavigate, currentActive = 'home' 
               onClick={() => handleSelectOption('tenant')}
             >
               <span className="option-icon"></span>
-              <span>Tenant Information</span>
+              <span> Add Tenant</span>
             </button>
           </div>
         </div>

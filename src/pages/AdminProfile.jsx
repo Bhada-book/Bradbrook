@@ -5,6 +5,7 @@ import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
 import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { handleRoleBasedDelete } from '../approvalHelper.js';
 
 export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -45,20 +46,23 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
   }, []);
 
   // Delete profile from Firestore
-  const handleDelete = async (profile) => {
-    if (window.confirm(`Are you sure you want to delete ${profile.name || 'this user'}?`)) {
-      try {
-        await deleteDoc(doc(db, profile.collectionName, profile.id));
-        alert('Profile deleted successfully!');
-      } catch (error) {
-        console.error('Error deleting profile:', error);
-        alert('Failed to delete profile.');
-      }
-    }
-  };
+const handleDelete = async (profile) => {
+  // Retrieve role saved during mobile OTP login session
+  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord'; 
+  const loggedInUser = JSON.parse(localStorage.getItem('userData') || '{}');
+
+  // This will route managers to approval requests and allow admins to delete directly
+  await handleRoleBasedDelete(
+    userRole, 
+    loggedInUser, 
+    profile.collectionName, 
+    profile.id, 
+    `${profile.name || ''} ${profile.surname || ''}`
+  );
+};
 
   // Handle Edit click: Passes profile data and navigates to the respective form
-const handleEdit = (profile) => {
+  const handleEdit = (profile) => {
     if (onEditProfile) {
       onEditProfile(profile); 
     }
@@ -163,15 +167,34 @@ const handleEdit = (profile) => {
 
         {/* ACTION BUTTONS */}
         <div className="admin-action-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-         <button 
-  className="add-manager-btn" 
-  style={{ background: '#b30000', color: '#fff' }}
-  onClick={() => onNavigate('documentViewer')}
->
-  View Documents
-</button>
-          <button className="add-manager-btn" onClick={() => { if(onEditProfile) onEditProfile(null); onNavigate('addManager'); }}>Add Manager</button>
-          <button className="add-collector-btn" onClick={() => { if(onEditProfile) onEditProfile(null); onNavigate('addCollector'); }}>Add Collector</button>
+          <button 
+            className="add-manager-btn" 
+            style={{ background: '#b30000', color: '#fff' }}
+            onClick={() => onNavigate('documentViewer')}
+          >
+            View Documents
+          </button>
+          
+          <button 
+            className="add-manager-btn" 
+            onClick={() => { if(onEditProfile) onEditProfile(null); onNavigate('adminDetail'); }}
+          >
+            Add Owner
+          </button>
+
+          <button 
+            className="add-manager-btn" 
+            onClick={() => { if(onEditProfile) onEditProfile(null); onNavigate('addManager'); }}
+          >
+            Add Manager
+          </button>
+
+          <button 
+            className="add-collector-btn" 
+            onClick={() => { if(onEditProfile) onEditProfile(null); onNavigate('addCollector'); }}
+          >
+            Add Collector
+          </button>
         </div>
       </main>
 
