@@ -4,13 +4,15 @@ import './TenantList.css'; // Added for table styles
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
-import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
 import { handleRoleBasedDelete } from '../approvalHelper.js';
+import Navbar from './navbar.jsx';
 
 export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [profilesData, setProfilesData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notificationsData, setNotificationsData] = useState([]);
 
   // Fetch profiles from all 3 collections in real-time (Admin/Landlord, Managers, Collectors)
   useEffect(() => {
@@ -44,39 +46,36 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
       unsubCollectors();
     };
   }, []);
-const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
-const isAdmin = userRole === 'Admin/Landlord';
-const isManager = userRole === 'Manager';
-const isCollector = userRole === 'Collector';
 
-{/* Render Edit button only for Admin and Manager */}
-{!isCollector && (
-  <button onClick={() => handleEdit(item)}>
-    <img src='images/edit.png' alt="Edit" />
-  </button>
-)}
+  // Fetch notifications for the Navbar
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
 
-{/* Render Delete button for Admin (direct delete) and Manager (sends approval notification) */}
-{!isCollector && (
-  <button onClick={() => handleDelete(item)}>
-    <img src='images/delete.png' alt="Delete" />
-  </button>
-)}
+  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
+  const isAdmin = userRole === 'Admin/Landlord';
+
   // Delete profile from Firestore
-const handleDelete = async (profile) => {
-  // Retrieve role saved during mobile OTP login session
-  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord'; 
-  const loggedInUser = JSON.parse(localStorage.getItem('userData') || '{}');
+  const handleDelete = async (profile) => {
+    const loggedInUser = JSON.parse(localStorage.getItem('userData') || '{}');
 
-  // This will route managers to approval requests and allow admins to delete directly
-  await handleRoleBasedDelete(
-    userRole, 
-    loggedInUser, 
-    profile.collectionName, 
-    profile.id, 
-    `${profile.name || ''} ${profile.surname || ''}`
-  );
-};
+    await handleRoleBasedDelete(
+      userRole, 
+      loggedInUser, 
+      profile.collectionName, 
+      profile.id, 
+      `${profile.name || ''} ${profile.surname || ''}`
+    );
+  };
 
   // Handle Edit click: Passes profile data and navigates to the respective form
   const handleEdit = (profile) => {
@@ -85,7 +84,7 @@ const handleDelete = async (profile) => {
     }
 
     if (profile.role === 'Admin/Landlord') {
-      onNavigate('adminDetail'); // Route to the admin info/registration screen
+      onNavigate('adminDetail'); 
     } else if (profile.role === 'Manager') {
       onNavigate('addManager');
     } else if (profile.role === 'Collector') {
@@ -96,38 +95,7 @@ const handleDelete = async (profile) => {
   return (
     <div className="admin-profile-container tenant-list-container">
       {/* --- TOP NAVBAR --- */}
-      <header className="home-navbar">
-        <div className="nav-logo-area">
-          <img src="/images/logot.png" alt="Logo" className="nav-blogo" />
-        </div>
-        <div className="nav-right-icons">
-          <div className="search-box">
-            <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
-            <input type="text" placeholder="Search" />
-          </div>
-          <button 
-            className="icon-btn notification-btn" 
-            aria-label="Notifications"
-            onClick={() => onNavigate('notifications')}
-          >
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
-          <button 
-            className="icon-btn menu-btn" 
-            aria-label="Menu"
-            onClick={() => setIsMenuOpen(true)}
-          >
-            ☰
-          </button>
-        </div>
-      </header>
-
-      {/* --- SIDE MENU DRAWER --- */}
-      <SideMenuDrawer 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-        onNavigate={onNavigate} 
-      />
+      <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
 
       {/* --- MAIN CONTENT --- */}
       <main className="admin-profile-content tenant-list-content">
@@ -171,9 +139,13 @@ const handleDelete = async (profile) => {
                   <button className="action-edit-btn" aria-label="Edit" onClick={() => handleEdit(profile)}>
                     <img src='images/edit.png' alt="Edit" />
                   </button>
-                  <button className="action-delete-btn" aria-label="Delete" onClick={() => handleDelete(profile)}>
-                    <img src='images/delete.png' alt="Delete" />
-                  </button>
+                  
+                  {/* Render Delete button ONLY for Admin */}
+                  {isAdmin && (
+                    <button className="action-delete-btn" aria-label="Delete" onClick={() => handleDelete(profile)}>
+                      <img src='images/delete.png' alt="Delete" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))

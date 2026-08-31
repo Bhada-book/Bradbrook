@@ -6,9 +6,10 @@ import { db } from '../firebase.js';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import { handleRoleBasedDelete } from '../approvalHelper'; // Optional: Use if deleting elements here
+import Navbar from './navbar.jsx';
 
 export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+ 
   
   // Dropdown filter states
   const [propertiesList, setPropertiesList] = useState([]);
@@ -286,35 +287,23 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     const tenantName = tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige';
     alert(`Transaction Details:\n\nUnit: ${unitName}\nTenant: ${tenantName}\nType: ${item.title}\nAmount: Rs.${item.amount}\nDate: ${item.date}`);
   };
-
+const [notificationsData, setNotificationsData] = useState([]);
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'notifications'));
+      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setNotificationsData(notifs);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+  fetchNotifications();
+}, []);
   return (
     <div className="tenant-history-container">
       {/* --- TOP NAVBAR --- */}
-      <header className="home-navbar">
-        <div className="nav-logo-area">
-          <img src="/images/logot.png" alt="Logo" className="nav-blogo" />
-        </div>
-        <div className="nav-right-icons">
-          <div className="search-box">
-            <span className="search-icon"><img src='images/Vector.png' alt="Search"></img></span>
-            <input type="text" placeholder="Search" />
-          </div>
-
-          {/* NOTIFICATION BUTTON SHOWN ONLY TO ADMIN OWNER */}
-          {isAdmin && (
-            <button className="icon-btn notification-btn" aria-label="Notifications" onClick={() => onNavigate('adminApprovals')}>
-              <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-            </button>
-          )}
-
-          <button className="icon-btn menu-btn" aria-label="Menu" onClick={() => setIsMenuOpen(true)}>
-            ☰
-          </button>
-        </div>
-      </header>
-
-      <SideMenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} onNavigate={onNavigate} />
-
+  <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
       {/* --- MAIN CONTENT --- */}
       <main className="tenant-history-content">
         <div className="form-header" style={{ marginBottom: "5px", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

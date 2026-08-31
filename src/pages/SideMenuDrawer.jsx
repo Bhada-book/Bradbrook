@@ -33,8 +33,8 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
     
     onClose();
     
-    if (onNavigate) {
-      onNavigate('login'); // Triggers lowercase 'login'
+    if (typeof onNavigate === 'function') {
+      onNavigate('login');
     } else {
       window.location.reload();
     }
@@ -54,7 +54,11 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
               key={index} 
               className="side-menu-item"
               onClick={() => {
-                onNavigate(item.page);
+                if (typeof onNavigate === 'function') {
+                  onNavigate(item.page);
+                } else {
+                  console.warn('onNavigate function is missing in SideMenuDrawer');
+                }
                 onClose();
               }}
             >

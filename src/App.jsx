@@ -22,6 +22,7 @@ import AdminApprovalNotifications from './pages/AdminApprovalNotifications';
 import Side from './pages/Tenant/Side';
 import History from '../src/pages/Tenant/History'
 import Profile from '../src/pages/Tenant/Profile'
+import Navbar from './pages/navbar';
 
 // Import Tenant Specific Pages
 import TenantHome from './pages/Tenant/TenantHome';
@@ -119,6 +120,9 @@ function App() {
         )}
         {currentPage === 'building' && (
           <BuildingDetails onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
+        )}
+        {currentPage === 'navbar' && (
+          <Navbar onBack={() => setCurrentPage ('navbar')} onNavigate={handleAppNavigation} />
         )}
         {currentPage === 'property' && (
           <PropertyDetails onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />

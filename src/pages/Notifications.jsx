@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Notifications.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
+import Navbar from './navbar.jsx'; // <-- Imported Navbar component
 import { db } from '../firebase.js';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { FaTimes, FaCheck, FaBan } from 'react-icons/fa';
@@ -10,6 +11,9 @@ export default function Notifications({ onBack, onNavigate }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notificationsData, setNotificationsData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Filter state: 'All', 'Pending', 'Approved', 'Rejected'
+  const [activeTab, setActiveTab] = useState('Pending');
 
   // State for viewing specific notification details modal
   const [selectedNotification, setSelectedNotification] = useState(null);
@@ -28,23 +32,17 @@ export default function Notifications({ onBack, onNavigate }) {
 
         return {
           id: docSnap.id,
+          paymentId: data.paymentId || null,
           date: data.date || '01/02/2026',
           title: data.title || 'Payment Approval',
           mode: data.mode || 'Offline Transfer',
-          status: data.status || 'Received',
+          status: data.status || 'Pending',
           receiptUrl: data.receiptUrl || '',
           statusClass
         };
       });
 
-      if (notifList.length > 0) {
-        setNotificationsData(notifList);
-      } else {
-        setNotificationsData([
-          { id: '1', date: '01/02/2026', title: 'Payment Approval', mode: 'Cash', status: 'Approved', receiptUrl: '', statusClass: 'status-approved' },
-          { id: '2', date: '01/02/2026', title: 'Payment Approval', mode: 'UPI', status: 'Pending', receiptUrl: '', statusClass: 'status-pending' },
-        ]);
-      }
+      setNotificationsData(notifList);
       setLoading(false);
     });
 
@@ -55,50 +53,55 @@ export default function Notifications({ onBack, onNavigate }) {
   const isAdmin = userRole === 'Admin/Landlord';
 
   // Function to handle status updates (Approved / Rejected)
+// Updated handleUpdateStatus function inside Notifications.jsx
   const handleUpdateStatus = async (id, newStatus) => {
     try {
       const notifRef = doc(db, 'notifications', id);
       await updateDoc(notifRef, { status: newStatus });
-      alert(`Payment marked as ${newStatus}! Tenant ledger history updated.`);
+
+      // If this is a profile deletion approval and status is set to Approved, execute the deletion
+      if (selectedNotification && selectedNotification.targetCollection && selectedNotification.targetDocumentId && newStatus === 'Approved') {
+        const targetRef = doc(db, selectedNotification.targetCollection, selectedNotification.targetDocumentId);
+        await deleteDoc(targetRef);
+      }
+
+      // Handle standard payment approvals if applicable
+      if (selectedNotification && selectedNotification.paymentId) {
+        const paymentRef = doc(db, 'payments', selectedNotification.paymentId);
+        await updateDoc(paymentRef, { status: newStatus });
+      }
+
+      alert(`Request marked as ${newStatus}!`);
       setSelectedNotification(null);
     } catch (error) {
       console.error("Error updating status: ", error);
       alert("Failed to update status.");
     }
   };
+  // Filter notifications based on the selected tab
+  const filteredNotifications = notificationsData.filter(item => {
+    if (activeTab === 'All') return true;
+    return item.status.toLowerCase() === activeTab.toLowerCase();
+  });
+
+// Add an effect to fetch notifications if they come from Firestore, for example:
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'notifications'));
+      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setNotificationsData(notifs);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+  fetchNotifications();
+}, []);
 
   return (
     <div className="notifications-container">
       {/* --- TOP NAVBAR --- */}
-      <header className="home-navbar">
-        <div className="nav-logo-area">
-          <img src="/images/logot.png" alt="Logo" className="nav-blogo" />
-        </div>
-        <div className="nav-right-icons">
-          <div className="search-box">
-            <span className="search-icon"><img src='images/Vector.png' alt="Search" /></span>
-            <input type="text" placeholder="Search" />
-          </div>
-
-          {isAdmin && (
-            <button 
-              className="icon-btn notification-btn" 
-              aria-label="Notifications"
-              onClick={() => onNavigate('adminApprovals')}
-            >
-              <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-            </button>
-          )}
-
-          <button 
-            className="icon-btn menu-btn" 
-            aria-label="Menu"
-            onClick={() => setIsMenuOpen(true)}
-          >
-            ☰
-          </button>
-        </div>
-      </header>
+      <Navbar onNavigate={onNavigate} notificationsData={notificationsData} />
 
       {/* --- SIDE MENU DRAWER --- */}
       <SideMenuDrawer 
@@ -109,17 +112,52 @@ export default function Notifications({ onBack, onNavigate }) {
 
       {/* --- MAIN CONTENT --- */}
       <main className="notifications-content">
-        <div className="form-header" style={{ marginBottom: '9px' }}>
-          <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>Notifications</h2>
+        <div className="form-header" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Back button with arrow pointing back to home */}
+          <button 
+            className="back-btn" 
+            aria-label="Go Back" 
+            onClick={() => onNavigate ? onNavigate('home') : onBack()}
+            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            ←
+          </button>
+          <h2 style={{ margin: 0 }}>Notifications</h2>
+        </div>
+
+        {/* --- CLICKABLE STATUS TABS (Pending / Approved / Rejected / All) --- */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '15px', overflowX: 'auto', paddingBottom: '4px' }}>
+          {['Pending', 'Approved', 'Rejected', 'All'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: 'none',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                background: activeTab === tab ? '#b30000' : '#e0e0e0',
+                color: activeTab === tab ? '#fff' : '#333',
+                transition: 'background 0.2s'
+              }}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         {/* NOTIFICATIONS LIST CARD */}
         <div className="notifications-table-card">
           {loading ? (
             <p style={{ padding: '20px', textAlign: 'center' }}>Loading notifications...</p>
+          ) : filteredNotifications.length === 0 ? (
+            <p style={{ padding: '25px', textAlign: 'center', color: '#777', fontSize: '13px' }}>
+              No {activeTab.toLowerCase()} notifications found.
+            </p>
           ) : (
-            notificationsData.map((item, index) => (
+            filteredNotifications.map((item, index) => (
               <div className="notification-row" key={item.id || index}>
                 <span className="notif-date">{item.date}</span>
                 <span className="notif-title">{item.title}</span>

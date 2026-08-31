@@ -4,9 +4,10 @@ import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js'; 
 import { collection, addDoc, getDocs, doc, updateDoc } from 'firebase/firestore';
+import Navbar from './navbar.jsx';
 
 export default function PropertyDetails({ onBack, onNavigate, editData }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [buildings, setBuildings] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -112,42 +113,26 @@ export default function PropertyDetails({ onBack, onNavigate, editData }) {
       alert('Failed to save property details.');
     }
   };
+// Add this state near your other state initializations
+const [notificationsData, setNotificationsData] = useState([]);
 
+// Add an effect to fetch notifications if they come from Firestore, for example:
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'notifications'));
+      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setNotificationsData(notifs);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+  fetchNotifications();
+}, []);
   return (
     <div className="property-container">
       {/* --- TOP NAVBAR --- */}
-      <header className="home-navbar">
-        <div className="nav-logo-area">
-          <img src="/images/logot.png" alt="Logo" className="nav-blogo" />
-        </div>
-        <div className="nav-right-icons">
-          <div className="search-box">
-            <span className="search-icon"><img src='images/Vector.png' alt="Search" /></span>
-            <input type="text" placeholder="Search" />
-          </div>
-          <button 
-            className="icon-btn notification-btn" 
-            aria-label="Notifications"
-            onClick={() => onNavigate('notifications')}
-          >
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
-          <button 
-            className="icon-btn menu-btn" 
-            aria-label="Menu"
-            onClick={() => setIsMenuOpen(true)}
-          >
-            ☰
-          </button>
-        </div>
-      </header>
-      
-      <SideMenuDrawer 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-        onNavigate={onNavigate} 
-      />
-
+<Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
       {/* --- MAIN CONTENT AREA --- */}
       <main className="property-content">
         <div className="form-header">

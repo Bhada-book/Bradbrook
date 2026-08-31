@@ -10,6 +10,13 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Year filter states
+  const currentYear = new Date().getFullYear().toString();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+  const availableYears = Array.from({ length: 4 }, (_, i) => (new Date().getFullYear() - i).toString());
+
   const [tenantInfo, setTenantInfo] = useState({
     name: 'Loading...',
     unit: '',
@@ -20,11 +27,6 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
   useEffect(() => {
     async function fetchTenantHistoryAndDetails() {
       try {
-        // 1. Optional: Fetch specific tenant info to display name/unit dynamically
-        const tenantQuery = query(collection(db, "tenants"), where("tenantId", "==", tenantIdProp));
-        // Or if tenantIdProp is the exact Firestore document ID:
-        // const tenantDocRef = doc(db, "tenants", tenantIdProp);
-        
         // Fetch payment history records linked to this tenant
         const q = query(collection(db, "payments"), where("tenantId", "==", tenantIdProp));
         const querySnapshot = await getDocs(q);
@@ -44,6 +46,12 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
 
     fetchTenantHistoryAndDetails();
   }, [tenantIdProp]);
+
+  // Filter history records based on the selected year
+  const filteredHistoryData = historyData.filter((item) => {
+    if (!item.date) return false;
+    return item.date.includes(selectedYear);
+  });
 
   return (
     <div className="tenant-container">
@@ -97,23 +105,49 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
           </div>
         </div>
 
-        {/* History Section Header */}
-        <div className="ledger-header-row">
+        {/* History Section Header with Dropdown */}
+        <div className="ledger-header-row" style={{ position: 'relative' }}>
           <h3 className="ledger-title">History Records</h3>
-          <div className="year-dropdown small">
-            <span>2026</span>
+          <div 
+            className="year-dropdown small" 
+            onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' ,color:'#b30000' }}
+          >
+            <span>{selectedYear}</span>
             <FaChevronDown />
           </div>
+
+          {/* Year Dropdown Menu */}
+          {isYearDropdownOpen && (
+            <div style={{ 
+              position: 'absolute', top: '100%', right: 0, background: '#fff', 
+              border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, 
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '120px' 
+            }}>
+              {availableYears.map((year, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => { 
+                    setSelectedYear(year); 
+                    setIsYearDropdownOpen(false); 
+                  }}
+                  style={{ padding: '8px 12px', fontSize: '12px', color: '#333', borderBottom: '1px solid #eee', cursor: 'pointer' }}
+                >
+                  {year}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* History Table */}
         <div className="ledger-table">
           {loading ? (
             <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Loading history...</div>
-          ) : historyData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No history records found for this tenant.</div>
+          ) : filteredHistoryData.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No history records found for {selectedYear}.</div>
           ) : (
-            historyData.map((item, idx) => (
+            filteredHistoryData.map((item, idx) => (
               <div className="ledger-row" key={item.id || idx}>
                 <div className="ledger-col item-name">{item.title || item.paymentType || 'Rent Payment'}</div>
                 <div className="ledger-col item-amount">₹{item.amount || item.finalMonthlyRental || '00,000'}</div>

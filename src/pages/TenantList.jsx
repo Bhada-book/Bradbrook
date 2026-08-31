@@ -5,9 +5,10 @@ import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import jsPDF from 'jspdf';
+import Navbar from './navbar.jsx';
 
 export default function TenantList({ onBack, onNavigate, onEditTenant }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [tenantsData, setTenantsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -210,41 +211,25 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
 
     docPdf.save(`${(tenant.name || 'Tenant').replace(/\s+/g, '_')}_Details.pdf`);
   };
+// Add this state near your other state initializations
+const [notificationsData, setNotificationsData] = useState([]);
 
+// Add an effect to fetch notifications if they come from Firestore, for example:
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'notifications'));
+      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setNotificationsData(notifs);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+  fetchNotifications();
+}, []);
   return (
     <div className="tenant-list-container">
-      <header className="home-navbar">
-        <div className="nav-logo-area">
-          <img src="/images/logot.png" alt="Logo" className="nav-blogo" />
-        </div>
-        <div className="nav-right-icons">
-          <div className="search-box">
-            <span className="search-icon"><img src='images/Vector.png' alt="Search" /></span>
-            <input type="text" placeholder="Search" />
-          </div>
-          <button 
-            className="icon-btn notification-btn" 
-            aria-label="Notifications"
-            onClick={() => onNavigate('notifications')}
-          >
-            <img src="/images/n.png" alt="Notifications" style={{ height: '22px', objectFit: 'contain' }} />
-          </button>
-          <button 
-            className="icon-btn menu-btn" 
-            aria-label="Menu"
-            onClick={() => setIsMenuOpen(true)}
-          >
-            ☰
-          </button>
-        </div>
-      </header>
-
-      <SideMenuDrawer 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-        onNavigate={onNavigate} 
-      />
-
+   <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
       <main className="tenant-list-content">
         <div className="form-header" style={{ marginBottom: '9px' }}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>

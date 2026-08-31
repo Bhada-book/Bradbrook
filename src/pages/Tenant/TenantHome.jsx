@@ -60,7 +60,7 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
     setIsPaymentModalOpen(false);
   };
 
-  const handleRecordPaymentSubmit = async (e) => {
+const handleRecordPaymentSubmit = async (e) => {
     e.preventDefault();
     if (!paymentDate || !receiptFile) {
       alert('Please select a date and upload a receipt image.');
@@ -74,8 +74,8 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
       reader.onload = async () => {
         const base64Image = reader.result;
 
-        // Push record into Firebase 'payments' and 'notifications' collection
-        await addDoc(collection(db, 'payments'), {
+        // 1. Push record into Firebase 'payments' collection
+        const paymentDocRef = await addDoc(collection(db, 'payments'), {
           tenantId: tenantIdProp,
           date: paymentDate,
           title: 'Offline Payment Record',
@@ -86,8 +86,10 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
           createdAt: new Date()
         });
 
+        // 2. Push record into Firebase 'notifications' collection with paymentId reference
         await addDoc(collection(db, 'notifications'), {
           tenantId: tenantIdProp,
+          paymentId: paymentDocRef.id, // Linking payment to notification
           date: paymentDate,
           title: 'Payment Approval',
           mode: 'Offline Transfer',
@@ -105,7 +107,7 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
         // Refresh ledger list locally
         setLedgerData(prev => [
           ...prev, 
-          { title: 'Offline Payment Record', amount: '00,000/-', date: paymentDate, status: 'Pending' }
+          { id: paymentDocRef.id, title: 'Offline Payment Record', amount: '00,000/-', date: paymentDate, status: 'Pending', receiptUrl: base64Image }
         ]);
       };
     } catch (error) {
@@ -217,7 +219,7 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
           <div className="invoice-info">
             <span className="invoice-title">Invoice BB26270001 <span className="invoice-status">Overdue</span></span>
           </div>
-          <button className="pay-btn" onClick={() => setIsPaymentModalOpen(true)}>Pay</button>
+          
         </div>
 
         {/* Advertisement Banner */}
@@ -271,47 +273,7 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
       </main>
 
       {/* Payment Gateway Modal */}
-      {isPaymentModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 1000
-        }} onClick={() => setIsPaymentModalOpen(false)}>
-          <div style={{
-            background: '#fff', width: '100%', maxWidth: '480px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '20px'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', color: '#333' }}>Select Payment Method</h3>
-              <button onClick={() => setIsPaymentModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }}>
-                <FaTimes />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div onClick={() => handlePaymentSelect('Google Pay / PhonePe / UPI')} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', border: '1px solid #eee', borderRadius: '10px', cursor: 'pointer' }}>
-                <FaMobileAlt size={22} color="#b30000" />
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '14px' }}>UPI Apps (GPay, PhonePe, Paytm)</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Pay instantly using UPI handles</div>
-                </div>
-              </div>
-              <div onClick={() => handlePaymentSelect('Net Banking')} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', border: '1px solid #eee', borderRadius: '10px', cursor: 'pointer' }}>
-                <FaUniversity size={22} color="#b30000" />
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '14px' }}>Net Banking</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>All major Indian banks supported</div>
-                </div>
-              </div>
-              <div onClick={() => handlePaymentSelect('Credit / Debit Card')} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', border: '1px solid #eee', borderRadius: '10px', cursor: 'pointer' }}>
-                <FaCreditCard size={22} color="#b30000" />
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '14px' }}>Credit / Debit Card</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Visa, MasterCard, RuPay</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+     
 
       {/* Record Payment Modal */}
       {isRecordPaymentModalOpen && (
