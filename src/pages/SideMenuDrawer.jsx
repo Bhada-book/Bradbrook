@@ -24,7 +24,8 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
       { name: 'Add Collector', page: 'addCollector' }
     );
   }
-const handleLogout = () => {
+
+  const handleLogout = () => {
     // Clear user role and session data from localStorage
     localStorage.removeItem('userRole');
     localStorage.removeItem('userData');
@@ -43,7 +44,7 @@ const handleLogout = () => {
     <div className="side-menu-overlay" onClick={onClose}>
       <div className="side-menu-container" onClick={(e) => e.stopPropagation()}>
         <div className="side-menu-header">
-          <h3>Menu Options</h3>
+          <h3>Menu</h3>
           <button className="close-drawer-btn" onClick={onClose}>✕</button>
         </div>
 

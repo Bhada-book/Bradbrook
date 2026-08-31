@@ -44,7 +44,24 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
       unsubCollectors();
     };
   }, []);
+const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
+const isAdmin = userRole === 'Admin/Landlord';
+const isManager = userRole === 'Manager';
+const isCollector = userRole === 'Collector';
 
+{/* Render Edit button only for Admin and Manager */}
+{!isCollector && (
+  <button onClick={() => handleEdit(item)}>
+    <img src='images/edit.png' alt="Edit" />
+  </button>
+)}
+
+{/* Render Delete button for Admin (direct delete) and Manager (sends approval notification) */}
+{!isCollector && (
+  <button onClick={() => handleDelete(item)}>
+    <img src='images/delete.png' alt="Delete" />
+  </button>
+)}
   // Delete profile from Firestore
 const handleDelete = async (profile) => {
   // Retrieve role saved during mobile OTP login session

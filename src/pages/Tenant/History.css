@@ -1,0 +1,228 @@
+.tenant-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7f7f7;
+  font-family: Arial, sans-serif;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.home-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background-color: #990000;
+  color: white;
+}
+
+.nav-logo-area .nav-blogo {
+  height: 32px;
+  object-fit: contain;
+}
+
+.nav-right-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+
+.tenant-main {
+  padding: 15px;
+  flex: 1;
+  padding-bottom: 80px;
+}
+
+.page-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.page-header-row h2 {
+  font-size: 1.2rem;
+  color: #b30000;
+  margin: 0;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #b30000;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.tenant-info-card {
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  border: 1px solid #eee;
+}
+
+.building-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+
+.room-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.room-number {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #b30000;
+}
+
+.tenant-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.tenant-badges-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-badge-overdue {
+  font-size: 11px;
+  color: #cc0000;
+  background: #ffe6e6;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.flat-badge {
+  font-size: 11px;
+  color: #555;
+  background: #eee;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.tenant-id-row {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.ledger-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ledger-title {
+  color: #b30000;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.year-dropdown.small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+  cursor: pointer;
+  color: #333;
+}
+
+.ledger-table {
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  margin-bottom: 20px;
+}
+
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ledger-row:last-child {
+  border-bottom: none;
+}
+
+.ledger-col.item-name {
+  flex: 2;
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+.ledger-col.item-amount {
+  flex: 1;
+  font-size: 13px;
+  color: #333;
+}
+
+.ledger-col.item-date {
+  flex: 1;
+  font-size: 12px;
+  color: #777;
+  text-align: right;
+  padding-right: 15px;
+}
+
+.ledger-col.item-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-action {
+  font-size: 14px;
+  cursor: pointer;
+  color: #555;
+}
+
+.icon-action.red {
+  color: #cc0000;
+}
+
+.action-btn.green-bg {
+  width: 100%;
+  background: #008000;
+  color: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 128, 0, 0.2);
+}
+
+.action-btn.green-bg:hover {
+  background: #006600;
+}

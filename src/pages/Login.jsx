@@ -39,6 +39,7 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
   }, []);
 
   // Helper function to find user role & profile across collections by mobile number
+ // Helper function to find user role & profile across collections by mobile number
   const identifyUserRoleAndSave = async (mobileNum) => {
     let role = 'Admin/Landlord';
     let profileData = { mobile: mobileNum };
@@ -65,6 +66,22 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
         if (!collectorSnap.empty) {
           role = 'Collector';
           profileData = { id: collectorSnap.docs[0].id, ...collectorSnap.docs[0].data() };
+        } else {
+          // 4. Check 'tenants' (नवीन जोडलेले)
+          const tenantsRef = collection(db, 'tenants');
+          // काही डेटाबेसमधून mobile ऐवजी phone फील्ड सुद्धा असू शकते, म्हणून दोन्ही तपासावे
+          const tenantQueryMobile = query(tenantsRef, where('mobile', '==', mobileNum));
+          let tenantSnap = await getDocs(tenantQueryMobile);
+          
+          if (tenantSnap.empty) {
+            const tenantQueryPhone = query(tenantsRef, where('phone', '==', mobileNum));
+            tenantSnap = await getDocs(tenantQueryPhone);
+          }
+
+          if (!tenantSnap.empty) {
+            role = 'Tenant';
+            profileData = { id: tenantSnap.docs[0].id, ...tenantSnap.docs[0].data() };
+          }
         }
       }
     }
@@ -104,7 +121,7 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
     }
   };
 
-  const handleSendOtp = async () => {
+ const handleSendOtp = async () => {
     setMobileError('');
 
     if (mobile.length !== 10) {
@@ -115,13 +132,24 @@ export default function Login({ onLoginSuccess, onNavigateToRegister }) {
     try {
       let exists = false;
       const userSnap = await getDoc(doc(db, 'users', mobile));
-      if (userSnap.exists()) exists = true;
-      else {
+      if (userSnap.exists()) {
+        exists = true;
+      } else {
         const mSnap = await getDocs(query(collection(db, 'managers'), where('mobile', '==', mobile)));
-        if (!mSnap.empty) exists = true;
-        else {
+        if (!mSnap.empty) {
+          exists = true;
+        } else {
           const cSnap = await getDocs(query(collection(db, 'collectors'), where('mobile', '==', mobile)));
-          if (!cSnap.empty) exists = true;
+          if (!cSnap.empty) {
+            exists = true;
+          } else {
+            // Check in tenants collection
+            const tSnapMobile = await getDocs(query(collection(db, 'tenants'), where('mobile', '==', mobile)));
+            const tSnapPhone = await getDocs(query(collection(db, 'tenants'), where('phone', '==', mobile)));
+            if (!tSnapMobile.empty || !tSnapPhone.empty) {
+              exists = true;
+            }
+          }
         }
       }
 
