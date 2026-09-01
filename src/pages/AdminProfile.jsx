@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './AdminProfile.css';
-import './TenantList.css'; // Added for table styles
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
-import { collection, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs } from 'firebase/firestore';
 import { handleRoleBasedDelete } from '../approvalHelper.js';
 import Navbar from './navbar.jsx';
 
@@ -14,19 +13,35 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
   const [loading, setLoading] = useState(true);
   const [notificationsData, setNotificationsData] = useState([]);
 
-  // Fetch profiles from all 3 collections in real-time (Admin/Landlord, Managers, Collectors)
+  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
+  const isAdmin = userRole === 'Admin/Landlord';
+  const loggedInUser = JSON.parse(localStorage.getItem('userData') || '{}');
+
+  // Fetch profiles from all 3 collections in real-time
   useEffect(() => {
     let cache = { users: [], managers: [], collectors: [] };
 
     const updateCombinedProfiles = (data, type) => {
       cache[type] = data;
       const combined = [...cache.users, ...cache.managers, ...cache.collectors];
-      setProfilesData(combined);
+      
+      // If user is Admin/Landlord, show all profiles. Otherwise, filter to show only their own profile.
+      if (isAdmin) {
+        setProfilesData(combined);
+      } else {
+        const filtered = combined.filter(profile => 
+          profile.id === loggedInUser.id || 
+          (profile.email && loggedInUser.email && profile.email.toLowerCase() === loggedInUser.email.toLowerCase()) ||
+          (profile.mobile && loggedInUser.mobile && profile.mobile === loggedInUser.mobile)
+        );
+        setProfilesData(filtered);
+      }
+      
       setLoading(false);
     };
 
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
-      const users = snapshot.docs.map(d => ({ id: d.id, ...d.data(), role: 'Admin/Landlord', collectionName: 'users' }));
+      const users = snapshot.docs.map(d => ({ id: d.id, ...d.data(), role: 'Landlord', collectionName: 'users' }));
       updateCombinedProfiles(users, 'users');
     }, (error) => console.error("Error fetching users:", error));
 
@@ -45,7 +60,7 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
       unsubManagers();
       unsubCollectors();
     };
-  }, []);
+  }, [isAdmin, loggedInUser.id, loggedInUser.email, loggedInUser.mobile]);
 
   // Fetch notifications for the Navbar
   useEffect(() => {
@@ -61,13 +76,8 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
     fetchNotifications();
   }, []);
 
-  const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
-  const isAdmin = userRole === 'Admin/Landlord';
-
   // Delete profile from Firestore
   const handleDelete = async (profile) => {
-    const loggedInUser = JSON.parse(localStorage.getItem('userData') || '{}');
-
     await handleRoleBasedDelete(
       userRole, 
       loggedInUser, 
@@ -77,13 +87,13 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
     );
   };
 
-  // Handle Edit click: Passes profile data and navigates to the respective form
+  // Handle Edit click
   const handleEdit = (profile) => {
     if (onEditProfile) {
       onEditProfile(profile); 
     }
 
-    if (profile.role === 'Admin/Landlord') {
+    if (profile.role === 'Landlord' || profile.role === 'Admin/Landlord') {
       onNavigate('adminDetail'); 
     } else if (profile.role === 'Manager') {
       onNavigate('addManager');
@@ -93,82 +103,64 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
   };
 
   return (
-    <div className="admin-profile-container tenant-list-container">
+    <div className="admin-profile-container">
       {/* --- TOP NAVBAR --- */}
       <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
 
       {/* --- MAIN CONTENT --- */}
-      <main className="admin-profile-content tenant-list-content">
-        <div className="form-header" style={{ marginBottom: '9px' }}>
+      <main className="admin-profile-content">
+        <div className="form-header">
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
-          <h2>All Profiles (Manager, Collector)</h2>
+          <h2>Profile</h2>
         </div>
-        <hr />
+        <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '12px 0 16px 0' }} />
 
-        {/* PROFILES TABLE LIST */}
-        <div className="tenant-table-card" style={{ marginTop: '15px' }}>
-          <div className="table-header-row">
-            <span className="col-name">Name</span>
-            <span className="col-unit">Role</span>
-            <span className="col-since">Mobile</span>
-            <span className="col-actions">Actions</span>
-          </div>
-
-          {loading ? (
-            <p style={{ padding: '20px', textAlign: 'center' }}>Loading profiles...</p>
-          ) : profilesData.length === 0 ? (
-            <p style={{ padding: '20px', textAlign: 'center', color: '#777' }}>No profiles found.</p>
-          ) : (
-            profilesData.map((profile) => (
-              <div className="table-data-row" key={profile.id}>
-                <span className="col-name">{profile.name} {profile.surname}</span>
-                <span className="col-unit">
-                  <span style={{ 
-                    padding: '2px 6px', 
-                    borderRadius: '4px', 
-                    fontSize: '10px', 
-                    background: profile.role === 'Admin/Landlord' ? '#ffe6e6' : profile.role === 'Manager' ? '#e6f2ff' : '#e6ffe6',
-                    color: profile.role === 'Admin/Landlord' ? '#b30000' : profile.role === 'Manager' ? '#004080' : '#006600',
-                    fontWeight: 'bold'
-                  }}>
-                    {profile.role}
-                  </span>
-                </span>
-                <span className="col-since">{profile.mobile || 'N/A'}</span>
-                <div className="col-actions action-btns">
+        {/* PROFILES LIST CARDS */}
+        {loading ? (
+          <p style={{ padding: '20px', textAlign: 'center' }}>Loading profiles...</p>
+        ) : profilesData.length === 0 ? (
+          <p style={{ padding: '20px', textAlign: 'center', color: '#777' }}>No profile found.</p>
+        ) : (
+          profilesData.map((profile) => (
+            <div className="admin-profile-card" key={profile.id} style={{ marginBottom: '16px', borderBottom: '1px solid #e0e0e0', paddingBottom: '16px' }}>
+              <div className="admin-card-header">
+                <div>
+                  <span className="landlord-tag">{profile.role}</span>
+                  <h3>{profile.name} {profile.surname}</h3>
+                </div>
+                <div className="admin-card-actions">
                   <button className="action-edit-btn" aria-label="Edit" onClick={() => handleEdit(profile)}>
-                    <img src='images/edit.png' alt="Edit" />
+                    <img src='images/edit.png' alt="Edit" style={{ width: '16px', height: '16px' }} />
                   </button>
-                  
-                  {/* Render Delete button ONLY for Admin */}
                   {isAdmin && (
                     <button className="action-delete-btn" aria-label="Delete" onClick={() => handleDelete(profile)}>
-                      <img src='images/delete.png' alt="Delete" />
+                      <img src='images/delete.png' alt="Delete" style={{ width: '16px', height: '16px' }} />
                     </button>
                   )}
                 </div>
               </div>
-            ))
-          )}
-        </div>
-        
-        <hr style={{ margin: '20px 0' }} />
 
-        {/* ACTION BUTTONS */}
-        <div className="admin-action-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              <div className="admin-details-body">
+                <p>{profile.mobile || profile.phone || 'N/A'}</p>
+                {profile.email && <p>{profile.email}</p>}
+                {(profile.address || profile.city || profile.state || profile.pincode) && (
+                  <p>
+                    {[profile.address, profile.city, profile.state].filter(Boolean).join(', ')}
+                    {profile.pincode ? `\n${profile.pincode}` : ''}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* ACTION BUTTONS (As requested, buttons remain visible) */}
+        <div className="admin-action-buttons">
           <button 
-            className="add-manager-btn" 
-            style={{ background: '#b30000', color: '#fff' }}
-            onClick={() => onNavigate('documentViewer')}
-          >
-            View Documents
-          </button>
-          
-          <button 
-            className="add-manager-btn" 
+            className="add-landlord-btn" 
             onClick={() => { if(onEditProfile) onEditProfile(null); onNavigate('adminDetail'); }}
           >
-            Add Owner
+            Add Landlord
           </button>
 
           <button 

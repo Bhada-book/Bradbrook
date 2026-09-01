@@ -33,10 +33,7 @@
   align-items: center;
 }
 
-.nav-blogo {
-  height: 45px;
-  object-fit: contain;
-}
+
 
 .nav-right-icons {
   display: flex;

@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './History.css';
 import Side from '../../pages/Tenant/Side';
-import BottomNavWithPopup from '../SideMenuDrawer';
+import SimpleBottomNav from './SimpleBottomNav.jsx';
 import { FaChevronDown, FaEye, FaDownload, FaArrowLeft } from 'react-icons/fa';
-import { db } from '../../firebase'; // Adjust path to your firebase config if needed
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase.js'; 
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
-export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRiTsjWb2sbqr3j2u6A" }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+export default function TenantHistory({ onBack, onNavigate, isMenuOpen, setIsMenuOpen, tenantIdProp = "0987654321" }) {
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Year filter states
   const currentYear = new Date().getFullYear().toString();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
@@ -19,32 +17,73 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
 
   const [tenantInfo, setTenantInfo] = useState({
     name: 'Loading...',
-    unit: '',
-    building: '',
-    tenantId: tenantIdProp
+    buildingOrComplex: 'Loading...',
+    roomNumber: '---'
   });
 
   useEffect(() => {
-    async function fetchTenantHistoryAndDetails() {
+    async function fetchTenantDataAndHistory() {
       try {
-        // Fetch payment history records linked to this tenant
-        const q = query(collection(db, "payments"), where("tenantId", "==", tenantIdProp));
-        const querySnapshot = await getDocs(q);
+        // 1. Fetch Tenant Profile Details
+        if (tenantIdProp) {
+          const qTenant = query(collection(db, 'tenants'), where('id', '==', tenantIdProp));
+          const querySnapshot = await getDocs(qTenant);
+
+          if (!querySnapshot.empty) {
+            setTenantInfo(querySnapshot.docs[0].data());
+          } else {
+            const tenantDocRef = doc(db, 'tenants', tenantIdProp);
+            const tenantDocSnap = await getDoc(tenantDocRef);
+            if (tenantDocSnap.exists()) {
+              setTenantInfo(tenantDocSnap.data());
+            } else {
+              setTenantInfo({ 
+                name: 'Default Tenant', 
+                buildingOrComplex: 'Building A', 
+                roomNumber: '101' 
+              });
+            }
+          }
+        }
+
+        // 2. Fetch Payment History Records (Checking current tenantIdProp and legacy fallback ID)
+        const paymentsRef = collection(db, 'payments');
         
-        const payments = [];
-        querySnapshot.forEach((doc) => {
-          payments.push({ id: doc.id, ...doc.data() });
+        const qPaymentsCurrent = query(
+          paymentsRef, 
+          where('tenantId', '==', tenantIdProp),
+          where('status', '==', 'Approved')
+        );
+        
+        const qPaymentsLegacy = query(
+          paymentsRef, 
+          where('tenantId', '==', '0987654321'),
+          where('status', '==', 'Approved')
+        );
+
+        const [snapshotCurrent, snapshotLegacy] = await Promise.all([
+          getDocs(qPaymentsCurrent), 
+          getDocs(qPaymentsLegacy)
+        ]);
+        
+        // Combine results uniquely using a Map to avoid duplicates
+        const paymentMap = new Map();
+        snapshotCurrent.forEach((docSnap) => {
+          paymentMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+        });
+        snapshotLegacy.forEach((docSnap) => {
+          paymentMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
         });
 
-        setHistoryData(payments);
+        setHistoryData(Array.from(paymentMap.values()));
       } catch (error) {
-        console.error("Error fetching history:", error);
+        console.error('Error fetching history or tenant profile:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchTenantHistoryAndDetails();
+    fetchTenantDataAndHistory();
   }, [tenantIdProp]);
 
   // Filter history records based on the selected year
@@ -52,6 +91,66 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
     if (!item.date) return false;
     return item.date.includes(selectedYear);
   });
+
+  // Function to generate and download history as PDF
+  const handleDownloadPdf = () => {
+    if (!filteredHistoryData || filteredHistoryData.length === 0) {
+      alert(`No history records available for ${selectedYear} to download.`);
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    const rowsHTML = filteredHistoryData.map(item => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.title || item.paymentType || 'Rent Payment'}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">₹${item.amount || '00,000/-'}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.date || 'N/A'}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.status || 'Approved'}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Tenant History Report - ${selectedYear}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 25px; color: #333; }
+            h2 { color: #b30000; margin-bottom: 5px; }
+            .meta { margin-bottom: 20px; font-size: 14px; color: #555; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th { background-color: #f8f9fa; padding: 12px 10px; text-align: left; border-bottom: 2px solid #ccc; font-size: 14px; }
+            td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+          </style>
+        </head>
+        <body>
+          <h2>Unit History Report (${selectedYear})</h2>
+          <div class="meta">
+            <p><strong>Tenant:</strong> ${tenantInfo.name || 'N/A'} ${tenantInfo.surname || ''} (${tenantInfo.buildingOrComplex || 'Building'} - Unit ${tenantInfo.roomNumber || tenantInfo.flatNo || 'N/A'})</p>
+            <p><strong>Tenant ID:</strong> ${tenantIdProp}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Payment Title</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHTML}
+            </tbody>
+          </table>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   return (
     <div className="tenant-container">
@@ -95,9 +194,9 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
         {/* Tenant Info Card */}
         <div className="user-info-strip">
           <div className="building-details">
-            <span className="building-label">Building / Unit</span>
-            <h2 className="room-number">{tenantInfo.unit || '402'}</h2>
-            <p className="tenant-name">{tenantInfo.name || 'Rutuja Khade'}</p>
+            <span className="building-label">{tenantInfo.buildingOrComplex || tenantInfo.buildingName || 'Building Name'}</span>
+            <h2 className="room-number">{tenantInfo.roomNumber || tenantInfo.flatNo || tenantInfo.roomNo || tenantInfo.propertyOrUnit || '101'}</h2>
+            <p className="tenant-name">{tenantInfo.name ? `${tenantInfo.name} ${tenantInfo.surname || ''}` : 'Tenant Name'}</p>
           </div>
           <div className="tenant-meta">
             <span className="flat-badge">Flat</span>
@@ -147,38 +246,65 @@ export default function TenantHistory({ onBack, onNavigate, tenantIdProp = "ONRi
           ) : filteredHistoryData.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No history records found for {selectedYear}.</div>
           ) : (
-            filteredHistoryData.map((item, idx) => (
-              <div className="ledger-row" key={item.id || idx}>
-                <div className="ledger-col item-name">{item.title || item.paymentType || 'Rent Payment'}</div>
-                <div className="ledger-col item-amount">₹{item.amount || item.finalMonthlyRental || '00,000'}</div>
-                <div className="ledger-col item-date">{item.date || item.createdAt || 'N/A'}</div>
-                <div className="ledger-col item-actions">
-                  {item.receiptUrl ? (
-                    <a href={item.receiptUrl} target="_blank" rel="noopener noreferrer">
-                      <FaEye className="icon-action" />
-                    </a>
-                  ) : (
-                    <FaEye className="icon-action" style={{ opacity: 0.4 }} />
-                  )}
-                  {item.receiptUrl && (
-                    <a href={item.receiptUrl} download target="_blank" rel="noopener noreferrer">
-                      <FaDownload className="icon-action red" />
-                    </a>
-                  )}
+            filteredHistoryData.map((item, idx) => {
+              const handleViewReceipt = (e) => {
+                e.preventDefault();
+                if (!item.receiptUrl) return;
+                
+                const win = window.open();
+                win.document.write(`
+                  <html>
+                    <head><title>Receipt View - ${item.title || 'Payment'}</title></head>
+                    <body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#333;">
+                      <img src="${item.receiptUrl}" style="max-width:100%;max-height:100%;object-fit:contain;" alt="Receipt" />
+                    </body>
+                  </html>
+                `);
+              };
+
+              return (
+                <div className="ledger-row" key={item.id || idx}>
+                  <div className="ledger-col item-name">{item.title || item.paymentType || 'Rent Payment'}</div>
+                  <div className="ledger-col item-amount">₹{item.amount || '00,000/-'}</div>
+                  <div className="ledger-col item-date">{item.date || 'N/A'}</div>
+                  <div className="ledger-col item-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    {item.receiptUrl ? (
+                      <span onClick={handleViewReceipt} style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }} title="View Receipt">
+                        <FaEye className="icon-action" />
+                      </span>
+                    ) : (
+                      <FaEye className="icon-action" style={{ opacity: 0.4, cursor: 'not-allowed' }} />
+                    )}
+
+                    {item.receiptUrl ? (
+                      <a 
+                        href={item.receiptUrl} 
+                        download={`Receipt_${item.date || 'Payment'}.png`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        title="Download Receipt"
+                        style={{ display: 'inline-flex', alignItems: 'center' }}
+                      >
+                        <FaDownload className="icon-action red" />
+                      </a>
+                    ) : (
+                      <FaDownload className="icon-action red" style={{ opacity: 0.4, pointerEvents: 'none' }} />
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
-        {/* Record Payment Button */}
-        <button className="action-btn green-bg" onClick={() => onNavigate('recordPayment')}>
-          Record Payment
+        {/* Download PDF Button */}
+        <button className="action-btn green-bg" onClick={handleDownloadPdf}>
+          Download History PDF
         </button>
       </main>
 
       {/* Bottom Navigation with Popup */}
-      <BottomNavWithPopup onNavigate={onNavigate} />
+    <SimpleBottomNav onNavigate={onNavigate} activeTab="home" />
     </div>
   );
 }

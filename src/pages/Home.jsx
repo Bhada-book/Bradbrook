@@ -60,7 +60,44 @@ export default function PropertyDetails({ onBack, onNavigate }) {
       unsubscribeNotifications();
     };
   }, []);
+// Year-wise calculation logic
+const calculateYearlyTotals = () => {
+  let totalReceived = 0;
+  let totalOverdue = 0;
+  let totalPending = 0;
 
+  properties.forEach(unit => {
+    // Check if property matches the selected building filter
+    const matchesFilter = selectedPropertyFilter === 'All' || unit.buildingOrComplex === selectedPropertyFilter;
+    if (!matchesFilter) return;
+
+    // Find tenant assigned to this unit
+    const tenant = tenants.find(t => 
+      String(t.propertyOrUnit || t.propertyUnit || '').trim().toLowerCase() === String(unit.propertyName || '').trim().toLowerCase()
+    );
+
+    // Monthly rent (convert to number, default to 0)
+    const monthlyRent = parseFloat(unit.expectedMonthlyRental) || 0;
+    const yearlyRent = monthlyRent * 12; // Year-wise calculation
+
+    if (tenant) {
+      const status = (tenant.paymentStatus || 'paid').toLowerCase();
+      if (status === 'paid') {
+        totalReceived += yearlyRent;
+      } else if (status === 'overdue') {
+        totalOverdue += yearlyRent;
+      } else {
+        totalPending += yearlyRent;
+      }
+    } else {
+      // Jar tenant nasel tar vacant property sathi expected rent pending/other madhe dharu shakta (optional)
+    }
+  });
+
+  return { totalReceived, totalOverdue, totalPending };
+};
+
+const yearlySummary = calculateYearlyTotals();
   // Check if a property unit has an assigned tenant
   const isUnitOccupied = (unit) => {
     return tenants.some(t => 
@@ -126,23 +163,23 @@ export default function PropertyDetails({ onBack, onNavigate }) {
             </div>
           </div>
 
-          <div className="summary-cards-grid">
-            <div className="summary-card">
-              <span className="card-label">Rs.</span>
-              <h3>00,00,000/-</h3>
-              <p className="status-green">● Received</p>
-            </div>
-            <div className="summary-card">
-              <span className="card-label">Rs.</span>
-              <h3>00,00,000/-</h3>
-              <p className="status-red">● Overdue</p>
-            </div>
-            <div className="summary-card">
-              <span className="card-label">Rs.</span>
-              <h3>00,00,000/-</h3>
-              <p className="status-orange">● Old Pending</p>
-            </div>
-          </div>
+        <div className="summary-cards-grid">
+  <div className="summary-card">
+    <span className="card-label">Rs.</span>
+    <h3>{yearlySummary.totalReceived.toLocaleString('en-IN')}/-</h3>
+    <p className="status-green">● Received (Yearly)</p>
+  </div>
+  <div className="summary-card">
+    <span className="card-label">Rs.</span>
+    <h3>{yearlySummary.totalOverdue.toLocaleString('en-IN')}/-</h3>
+    <p className="status-red">● Overdue (Yearly)</p>
+  </div>
+  <div className="summary-card">
+    <span className="card-label">Rs.</span>
+    <h3>{yearlySummary.totalPending.toLocaleString('en-IN')}/-</h3>
+    <p className="status-orange">● Old Pending (Yearly)</p>
+  </div>
+</div>
 
           <div className="occupancy-pill">
             Occupied Units : <span>{String(occupiedUnitsRaw.length).padStart(3, '0')}</span> &nbsp;|&nbsp; Vacant Units : <span>{String(vacantUnitsRaw.length).padStart(3, '0')}</span>
@@ -150,164 +187,211 @@ export default function PropertyDetails({ onBack, onNavigate }) {
         </section>
 
         {/* UNITS SECTION (Occupied/Active with Clickable Filters) */}
-        <section className="units-section">
-          <div className="section-header-bar1">
-            <h3>UNITS</h3>
-            <div className="filters-row" style={{ display: 'flex', gap: '10px' }}>
-              
-              {/* Property Filter Dropdown */}
-              <div className="mini-dropdown" onClick={() => setIsPropertyDropdownOpen(!isPropertyDropdownOpen)} style={{ cursor: 'pointer', position: 'relative' }}>
-                {selectedPropertyFilter} <span style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
+    <section className="units-section">
+  <div className="section-header-bar1">
+    <h3>UNITS</h3>
+    <div className="filters-row" style={{ display: 'flex', gap: '10px' }}>
+      
+      {/* Status Filter Dropdown */}
+      <div className="mini-dropdown" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)} style={{ cursor: 'pointer', position: 'relative' }}>
+        {selectedStatusFilter} <span style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
+        
+        {isStatusDropdownOpen && (
+          <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '120px' }}>
+            {['All', 'Paid', 'Overdue', 'Pending'].map((status, idx) => (
+              <div 
+                key={idx} 
+                onClick={(e) => { e.stopPropagation(); setSelectedStatusFilter(status); setIsStatusDropdownOpen(false); }}
+                style={{ padding: '8px 12px', fontSize: '12px', color: '#333', borderBottom: '1px solid #eee', cursor: 'pointer' }}
+              >
+                {status}
               </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-              {/* Status Filter Dropdown */}
-              <div className="mini-dropdown" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)} style={{ cursor: 'pointer', position: 'relative' }}>
-                {selectedStatusFilter} <span style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
-                
-                {isStatusDropdownOpen && (
-                  <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '120px' }}>
-                    {['All', 'Paid', 'Overdue', 'Pending'].map((status, idx) => (
-                      <div 
-                        key={idx} 
-                        onClick={(e) => { e.stopPropagation(); setSelectedStatusFilter(status); setIsStatusDropdownOpen(false); }}
-                        style={{ padding: '8px 12px', fontSize: '12px', color: '#333', borderBottom: '1px solid #eee', cursor: 'pointer' }}
-                      >
-                        {status}
-                      </div>
-                    ))}
-                  </div>
-                )}
+    </div>
+  </div>
+  <hr />
+
+  <div className="unit-cards-grid">
+    {/* Filter logic applied here before mapping */}
+    {occupiedUnits.filter((unit) => {
+      if (selectedStatusFilter === 'All') return true;
+      
+      const tenant = tenants.find(t => 
+        String(t.propertyOrUnit || t.propertyUnit || '').trim().toLowerCase() === String(unit.propertyName || '').trim().toLowerCase()
+      ) || {};
+      
+      const paymentStatus = (tenant.paymentStatus || 'paid').toLowerCase();
+      return paymentStatus === selectedStatusFilter.toLowerCase();
+    }).length === 0 ? (
+      <p style={{ padding: '20px', color: '#777' }}>No matching occupied units found.</p>
+    ) : (
+      occupiedUnits.filter((unit) => {
+        if (selectedStatusFilter === 'All') return true;
+        
+        const tenant = tenants.find(t => 
+          String(t.propertyOrUnit || t.propertyUnit || '').trim().toLowerCase() === String(unit.propertyName || '').trim().toLowerCase()
+        ) || {};
+        
+        const paymentStatus = (tenant.paymentStatus || 'paid').toLowerCase();
+        return paymentStatus === selectedStatusFilter.toLowerCase();
+      }).map((unit) => {
+        const tenant = tenants.find(t => 
+          String(t.propertyOrUnit || t.propertyUnit || '').trim().toLowerCase() === String(unit.propertyName || '').trim().toLowerCase()
+        ) || {};
+
+        const typeClass = unit.propertyType ? unit.propertyType.toLowerCase() : 'flat';
+        const paymentStatus = tenant.paymentStatus ? tenant.paymentStatus.toLowerCase() : 'paid';
+        const statusLabel = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+
+        return (
+          <div 
+            className="unit-card" 
+            key={unit.id}
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate('profile', unit.propertyName || unit.id);
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="unit-card-top">
+              <span className="bldg-name">{unit.buildingOrComplex || 'Building Name'}</span>
+              <span className={`badge-tag ${typeClass}`}>{unit.propertyType || 'Flat'}</span>
+            </div>
+            <div className="unit-card-body">
+              <div>
+                <h4 className="unit-no">{unit.propertyName || '101'}</h4>
+                <p className="tenant-name">{tenant.name ? `${tenant.name} ${tenant.surname || ''}` : 'Tenant Assigned'}</p>
+                <div className="status-container">
+                  <span className={`status-badge ${paymentStatus}`}>
+                    ● {statusLabel}
+                  </span>
+                </div>
               </div>
-
+              <div className="unit-card-right">
+                <span className="rent-amount">Rs.{unit.expectedMonthlyRental || '10,000'}/-</span>
+              </div>
             </div>
           </div>
-          <hr />
-
-          <div className="unit-cards-grid">
-            {occupiedUnits.length === 0 ? (
-              <p style={{ padding: '20px', color: '#777' }}>No matching occupied units found.</p>
-            ) : (
-              occupiedUnits.map((unit) => {
-                const tenant = tenants.find(t => 
-                  String(t.propertyOrUnit || t.propertyUnit || '').trim().toLowerCase() === String(unit.propertyName || '').trim().toLowerCase()
-                ) || {};
-
-                const typeClass = unit.propertyType ? unit.propertyType.toLowerCase() : 'flat';
-                const paymentStatus = tenant.paymentStatus ? tenant.paymentStatus.toLowerCase() : 'paid';
-                const statusLabel = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
-
-                return (
-                  <div className="unit-card" key={unit.id}>
-                    <div className="unit-card-top">
-                      <span className="bldg-name">{unit.buildingOrComplex || 'Building Name'}</span>
-                      <span className={`badge-tag ${typeClass}`}>{unit.propertyType || 'Flat'}</span>
-                    </div>
-                    <div className="unit-card-body">
-                      <div>
-                        <h4 className="unit-no">{unit.propertyName || '101'}</h4>
-                        <p className="tenant-name">{tenant.name ? `${tenant.name} ${tenant.surname || ''}` : 'Tenant Assigned'}</p>
-                        <div className="status-container">
-                          <span className={`status-badge ${paymentStatus}`}>
-                            ● {statusLabel}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="unit-card-right">
-                        <span className="rent-amount">Rs.{unit.expectedMonthlyRental || '10,000'}/-</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
+        );
+      })
+    )}
+  </div>
+</section>
 
         {/* VACANT UNITS SECTION WITH PROPERTY FILTER */}
-        <section className="units-section vacant-section" style={{ marginTop: '20px' }}>
-          <div className="section-header-bar1">
-            <h3>VACANT UNITS</h3>
-            <div className="filters-row" style={{ display: 'flex', gap: '10px' }}>
-              
-              {/* Vacant Property Filter Dropdown */}
-              <div className="mini-dropdown" onClick={() => setIsVacantPropertyDropdownOpen(!isVacantPropertyDropdownOpen)} style={{ cursor: 'pointer', position: 'relative' }}>
-                {selectedVacantPropertyFilter} <span style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
-                
-                {isVacantPropertyDropdownOpen && (
-                  <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '150px' }}>
-                    {uniqueBuildings.map((bldg, idx) => (
-                      <div 
-                        key={idx} 
-                        onClick={(e) => { e.stopPropagation(); setSelectedVacantPropertyFilter(bldg); setIsVacantPropertyDropdownOpen(false); }}
-                        style={{ padding: '8px 12px', fontSize: '12px', color: '#333', borderBottom: '1px solid #eee', cursor: 'pointer' }}
-                      >
-                        {bldg}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+     <section className="units-section vacant-section" style={{ marginTop: '20px' }}>
+  <div className="section-header-bar1">
+    <h3>VACANT UNITS</h3>
+    <div className="filters-row" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      
+      {/* Add Unit Button */}
+      <button 
+       
+         onClick={() => {
+    if (onNavigate) onNavigate('property'); 
+  }}
+        
+        style={{
+          background: '#b30000',
+          color: '#fff',
+          border: 'none',
+          padding: '6px 12px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItem: 'center',
+          gap: '4px'
+        }}
+      >
+        + Add Unit
+      </button>
 
+      {/* Vacant Property Filter Dropdown */}
+      <div className="mini-dropdown" onClick={() => setIsVacantPropertyDropdownOpen(!isVacantPropertyDropdownOpen)} style={{ cursor: 'pointer', position: 'relative' }}>
+        {selectedVacantPropertyFilter} <span style={{height:'20px'}}><img src='images/arrow.png' alt="Arrow" /></span>
+        
+        {isVacantPropertyDropdownOpen && (
+          <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '150px' }}>
+            {uniqueBuildings.map((bldg, idx) => (
+              <div 
+                key={idx} 
+                onClick={(e) => { e.stopPropagation(); setSelectedVacantPropertyFilter(bldg); setIsVacantPropertyDropdownOpen(false); }}
+                style={{ padding: '8px 12px', fontSize: '12px', color: '#333', borderBottom: '1px solid #eee', cursor: 'pointer' }}
+              >
+                {bldg}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+    </div>
+  </div>
+  <hr />
+
+  <div className="unit-cards-grid">
+    {vacantUnits.length === 0 ? (
+      <p style={{ padding: '20px', color: '#777' }}>No vacant units found.</p>
+    ) : (
+      vacantUnits.map((unit) => {
+        const typeClass = unit.propertyType ? unit.propertyType.toLowerCase() : 'flat';
+        
+        return (
+          <div className="unit-card vacant-card" key={unit.id} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div className="unit-card-top">
+                <span className="bldg-name">{unit.buildingOrComplex || 'Building Name'}</span>
+                <span className={`badge-tag ${typeClass}`}>
+                  {unit.propertyType || 'Flat'}
+                </span>  
+              </div>
+              <div className="unit-card-body">
+                <div>
+                  <h4 className="unit-no">{unit.propertyName || '101'}</h4>
+                  <p className="sub-info">{unit.area || '750'} sqft</p>
+                </div>
+                <div className="unit-card-right">
+                  <span className="rent-amount">Rs.{unit.expectedMonthlyRental || '10,000'}/-</span>
+                </div>
+              </div>
+              <div className="vacant-footer-info" style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                Parking : {unit.parking || 'N/A'}
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid #eee', textAlign: 'right', paddingTop: '8px' }}>
+              <button 
+                onClick={() => {
+                  if (onNavigate) onNavigate('tenant');
+                }} 
+                style={{
+                  background: '#b30000',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Add Tenant
+              </button>
             </div>
           </div>
-          <hr />
-
-          <div className="unit-cards-grid">
-            {vacantUnits.length === 0 ? (
-              <p style={{ padding: '20px', color: '#777' }}>No vacant units found.</p>
-            ) : (
-              vacantUnits.map((unit) => {
-                const typeClass = unit.propertyType ? unit.propertyType.toLowerCase() : 'flat';
-                
-                return (
-                  <div className="unit-card vacant-card" key={unit.id} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div className="unit-card-top">
-                        <span className="bldg-name">{unit.buildingOrComplex || 'Building Name'}</span>
-                        <span className={`badge-tag ${typeClass}`}>
-                          {unit.propertyType || 'Flat'}
-                        </span>  
-                      </div>
-                      <div className="unit-card-body">
-                        <div>
-                          <h4 className="unit-no">{unit.propertyName || '101'}</h4>
-                          <p className="sub-info">{unit.area || '750'} sqft</p>
-                        </div>
-                        <div className="unit-card-right">
-                          <span className="rent-amount">Rs.{unit.expectedMonthlyRental || '10,000'}/-</span>
-                        </div>
-                      </div>
-                      <div className="vacant-footer-info" style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                        Parking : {unit.parking || 'N/A'}
-                      </div>
-                    </div>
-
-                    <div style={{ borderTop: '1px solid #eee', textAlign: 'right', paddingTop: '8px' }}>
-                      <button 
-                        onClick={() => {
-                          if (onNavigate) onNavigate('tenant');
-                        }} 
-                        style={{
-                          background: '#b30000',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Add Tenant
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
-
+        );
+      })
+    )}
+  </div>
+</section>
       </main>
+        <BottomNavWithPopup onNavigate={onNavigate} currentActive="home" />
     </div>
   );
 }

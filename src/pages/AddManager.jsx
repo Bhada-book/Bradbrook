@@ -4,7 +4,7 @@ import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
 import Navbar from './navbar.jsx';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDocs, query, where} from 'firebase/firestore';
 
 export default function AddManager({ onBack, onNavigate, editData }) {
   

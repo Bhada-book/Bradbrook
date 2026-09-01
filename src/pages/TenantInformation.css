@@ -1,13 +1,7 @@
 .body {
   font-family: Arial, Helvetica;
 }
-.tenant-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: transparent;
-  padding-bottom: 90px;
-}
+
 
 /* --- TOP NAVBAR --- */
 .tenant-navbar {
@@ -33,10 +27,7 @@
   align-items: center;
 }
 
-.nav-blogo {
-  height: 45px;
-  object-fit: contain;
-}
+
 
 .nav-right-icons {
   display: flex;

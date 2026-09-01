@@ -1,7 +1,7 @@
 import React, { useState , useEffect} from 'react';
 import './Profile.css';
 import Side from '../Tenant/Side';
-import BottomNavWithPopup from '../BottomNavWithPopup';
+import SimpleBottomNav from './SimpleBottomNav';
 import { 
   FaArrowLeft, FaUser, FaBuilding, FaIdCard, FaPhone, 
   FaEnvelope, FaMapMarkerAlt, FaFilePdf, FaImage 
@@ -176,7 +176,7 @@ export default function TenantProfile({ onBack, onNavigate, tenantIdProp = "ONRi
       </main>
 
       {/* Bottom Navigation with Popup */}
-      <BottomNavWithPopup onNavigate={onNavigate} />
+    <SimpleBottomNav onNavigate={onNavigate} activeTab="home" />
     </div>
   );
 }

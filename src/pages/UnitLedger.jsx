@@ -7,18 +7,20 @@ import { collection, getDocs } from 'firebase/firestore';
 import Navbar from './navbar.jsx';
 
 export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
-
-
   // Filter dropdown lists
   const [propertiesList, setPropertiesList] = useState([]);
   const [buildingsList, setBuildingsList] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState('');
 
-  // Year filter states
+  // Year filter states (kept for Collection Summary)
   const [selectedYear, setSelectedYear] = useState('2026');
   const [isSummaryYearDropdownOpen, setIsSummaryYearDropdownOpen] = useState(false);
-  const [isLedgerYearDropdownOpen, setIsLedgerYearDropdownOpen] = useState(false);
   const availableYears = ['2026', '2025', '2024', '2023', 'All'];
+
+  // Status filter states (for Ledger Transactions section)
+  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const availableStatuses = ['All', 'Paid', 'Pending'];
 
   const [allLedgerData, setAllLedgerData] = useState([]);
   const [filteredLedgerData, setFilteredLedgerData] = useState([]);
@@ -28,6 +30,7 @@ export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
     oldPending: '00,00,000/-'
   });
   const [loading, setLoading] = useState(true);
+  const [notificationsData, setNotificationsData] = useState([]);
 
   // 1. Fetch properties & buildings on mount for filter dropdowns
   useEffect(() => {
@@ -51,13 +54,26 @@ export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
     fetchPropertiesDropdown();
   }, []);
 
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
   // 2. Fetch building-wide ledger transactions and calculate summary when selectedBuilding changes
   useEffect(() => {
     const fetchBuildingLedgerDetails = async () => {
       if (!selectedBuilding) return;
       setLoading(true);
       try {
-        // Find all unit/property names belonging to this building
         const matchingUnits = propertiesList
           .filter(p => p.buildingOrComplex === selectedBuilding)
           .map(p => p.propertyName || p.unitId);
@@ -72,7 +88,6 @@ export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
               const data = docSnap.data();
               const unitKey = data.propertyOrUnit || data.unitId || data.propertyName || data.unit;
               
-              // Include record if it matches any unit in this building
               if (matchingUnits.includes(unitKey)) {
                 const itemDateStr = data.date || data.createdAt?.toDate?.()?.toLocaleDateString() || '01/03/2026';
                 let itemYear = '2026';
@@ -118,19 +133,33 @@ export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
     fetchBuildingLedgerDetails();
   }, [selectedBuilding, propertiesList]);
 
-  // 3. Filter ledger and summary totals based on selected Year
+  // 3. Filter ledger data based on Year and Status
   useEffect(() => {
     let yearFiltered = allLedgerData;
     if (selectedYear !== 'All') {
       yearFiltered = allLedgerData.filter(item => item.year === selectedYear);
     }
-    setFilteredLedgerData(yearFiltered);
 
+    // Filter ledger items by Status
+    let statusFiltered = yearFiltered;
+    if (selectedStatus !== 'All') {
+      statusFiltered = yearFiltered.filter(item => {
+        const st = String(item.status).toLowerCase();
+        if (selectedStatus === 'Paid') return st === 'paid' || st === 'received';
+        if (selectedStatus === 'Pending') return st === 'pending' || st === 'overdue';
+        return true;
+      });
+    }
+
+    setFilteredLedgerData(statusFiltered);
+
+    // Calculate Summary totals based on year filter
     let totalReceived = 0;
     let totalOverdue = 0;
     yearFiltered.forEach(p => {
       const amt = parseFloat(String(p.amount).replace(/[^0-9.]/g, '')) || 0;
-      if (p.status === 'received' || p.type === 'Received') {
+      const st = String(p.status).toLowerCase();
+      if (st === 'received' || st === 'paid' || p.type === 'Received') {
         totalReceived += amt;
       } else {
         totalOverdue += amt;
@@ -142,34 +171,16 @@ export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
       overdue: totalOverdue > 0 ? `${totalOverdue.toLocaleString('en-IN')}/-` : '00,00,000/-',
       oldPending: '00,00,000/-'
     });
-  }, [allLedgerData, selectedYear]);
+  }, [allLedgerData, selectedYear, selectedStatus]);
 
-  // Handle Building Filter Change
   const handleBuildingChange = (e) => {
     setSelectedBuilding(e.target.value);
   };
-// Add this state near your other state initializations
-const [notificationsData, setNotificationsData] = useState([]);
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
   return (
     <div className="unit-ledger-container" style={{ fontFamily: 'Arial, sans-serif' }}>
-      {/* --- TOP NAVBAR --- */}
-<Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
 
-      {/* --- MAIN CONTENT --- */}
       <main className="unit-ledger-content">
         <div className="form-header" style={{ marginBottom: '9px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -177,7 +188,6 @@ useEffect(() => {
             <h2>Property Collection</h2>
           </div>
 
-          {/* Building / Property Wise Selector Filter */}
           <div style={{ display: 'flex', gap: '6px' }}>
             <select 
               value={selectedBuilding} 
@@ -196,10 +206,10 @@ useEffect(() => {
         {/* COLLECTION SUMMARY CARD WITH YEAR FILTER */}
         <section className="ledger-summary-section">
           <div className="ledger-summary-top-bar">
-            <span className="summary-title-tab">Collection Summary ({selectedBuilding || 'All Properties'})</span>
+            <span className="summary-title-tab">Collection Summary</span>
             <div className="year-dropdown" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsSummaryYearDropdownOpen(!isSummaryYearDropdownOpen)}>
               <span>{selectedYear}</span>
-              <span className="arrow" style={{ height: '20px', marginLeft: '4px' }}><img src='images/arrow.png' alt="Arrow"></img></span>
+              <span className="arrow" style={{ height: '20px', marginLeft: '4px' }}><img src='images/arrow.png' alt="Arrow" /></span>
 
               {isSummaryYearDropdownOpen && (
                 <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '80px' }}>
@@ -236,23 +246,23 @@ useEffect(() => {
           </div>
         </section>
 
-        {/* LEDGER TRANSACTIONS SECTION WITH YEAR FILTER */}
+        {/* LEDGER TRANSACTIONS SECTION WITH STATUS FILTER */}
         <section className="ledger-transactions-section">
           <div className="section-header-bar">
             <h3>Building Ledger Transactions</h3>
-            <div className="year-dropdown" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsLedgerYearDropdownOpen(!isLedgerYearDropdownOpen)}>
-              <span>{selectedYear}</span>
-              <span className="arrow" style={{ height: '20px', marginLeft: '4px' }}><img src='images/arrow.png' alt="Arrow"></img></span>
+            <div className="year-dropdown" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}>
+              <span>{selectedStatus}</span>
+              <span className="arrow" style={{ height: '20px', marginLeft: '4px' }}><img src='images/arrow.png' alt="Arrow" /></span>
 
-              {isLedgerYearDropdownOpen && (
-                <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '80px' }}>
-                  {availableYears.map((yr) => (
+              {isStatusDropdownOpen && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', zIndex: 100, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', width: '90px' }}>
+                  {availableStatuses.map((status) => (
                     <div 
-                      key={yr} 
-                      onClick={(e) => { e.stopPropagation(); setSelectedYear(yr); setIsLedgerYearDropdownOpen(false); }}
-                      style={{ padding: '6px 10px', fontSize: '12px', color: selectedYear === yr ? '#b30000' : '#333', textAlign: 'center', borderBottom: '1px solid #eee' }}
+                      key={status} 
+                      onClick={(e) => { e.stopPropagation(); setSelectedStatus(status); setIsStatusDropdownOpen(false); }}
+                      style={{ padding: '6px 10px', fontSize: '12px', color: selectedStatus === status ? '#b30000' : '#333', textAlign: 'center', borderBottom: '1px solid #eee' }}
                     >
-                      {yr}
+                      {status}
                     </div>
                   ))}
                 </div>
@@ -264,7 +274,7 @@ useEffect(() => {
             {loading ? (
               <p style={{ padding: '20px', textAlign: 'center' }}>Loading ledger...</p>
             ) : filteredLedgerData.length === 0 ? (
-              <p style={{ padding: '20px', textAlign: 'center', color: '#777' }}>No ledger records found for {selectedYear} in {selectedBuilding}.</p>
+              <p style={{ padding: '20px', textAlign: 'center', color: '#777' }}>No ledger records found for status "{selectedStatus}" in {selectedBuilding}.</p>
             ) : (
               filteredLedgerData.map((item, index) => (
                 <div className="ledger-row" key={index}>
@@ -272,8 +282,8 @@ useEffect(() => {
                   <span className="ledger-item-amount">Rs.{item.amount}</span>
                   <span className="ledger-item-date">{item.date}</span>
                   <div className="ledger-item-actions">
-                    <button className="action-eye-btn" aria-label="View"><img src='images/eye.png' alt="View"></img></button>
-                    <button className="action-download-btn" aria-label="Download"><img src='images/down.png' alt="Download"></img></button>
+                    <button className="action-eye-btn" aria-label="View"><img src='images/eye.png' alt="View" /></button>
+                    <button className="action-download-btn" aria-label="Download"><img src='images/down.png' alt="Download" /></button>
                   </div>
                 </div>
               ))
@@ -291,12 +301,11 @@ useEffect(() => {
             Record Payment
           </button>
           <button className="send-ledger-btn">
-            <span className="whatsapp-icon"><img src='images/whatsup.png' alt="WhatsApp"></img></span> Send Ledger
+            <span className="whatsapp-icon"><img src='images/whatsup.png' alt="WhatsApp" /></span> Send Ledger
           </button>
         </div>
       </main>
 
-      {/* --- BOTTOM NAVIGATION & POPUP --- */}
       <BottomNavWithPopup onNavigate={onNavigate} currentActive="tenant" />
     </div>
   );

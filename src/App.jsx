@@ -23,6 +23,7 @@ import Side from './pages/Tenant/Side';
 import History from '../src/pages/Tenant/History'
 import Profile from '../src/pages/Tenant/Profile'
 import Navbar from './pages/navbar';
+import SimpleBottomNav from './pages/Tenant/SimpleBottomNav';
 
 // Import Tenant Specific Pages
 import TenantHome from './pages/Tenant/TenantHome';
@@ -33,6 +34,7 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [editingTenantData, setEditingTenantData] = useState(null);
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [selectedTenantData, setSelectedTenantData] = useState(null);
 
   // Centralized navigation handler
  // Centralized navigation handler
@@ -76,31 +78,49 @@ function App() {
     const userRole = localStorage.getItem('userRole');
 
     // Route 1: Tenant Dashboard Flow
-    if (userRole === 'Tenant') {
-      return (
-        <div className="app-container">
-          {currentPage === 'home' && (
-            <TenantHome 
-              onNavigate={handleAppNavigation} 
-              isMenuOpen={isMenuOpen} 
-              setIsMenuOpen={setIsMenuOpen} 
-            />
-          )}
-          {currentPage === 'profile' && (
-            <Profile onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
-          )}
-          {currentPage === 'notifications' && (
-            <Notifications onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
-          )}
-         {currentPage === 'history' && (
-  <History onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
+  if (userRole === 'Tenant') {
+  // Get the real tenant ID stored during login
+  const loggedInTenantId = localStorage.getItem('tenantId') || "ONRiTsjWb2sbqr3j2u6A";
+
+  return (
+    <div className="app-container">
+      {currentPage === 'home' && (
+        <TenantHome 
+          onNavigate={handleAppNavigation} 
+          isMenuOpen={isMenuOpen} 
+          setIsMenuOpen={setIsMenuOpen}
+          tenantIdProp={loggedInTenantId} 
+        />
+      )}
+   
+      {currentPage === 'profile' && (
+        <Profile 
+          onBack={() => setCurrentPage('home')} 
+          onNavigate={handleAppNavigation} 
+          tenantIdProp={loggedInTenantId}
+        />
+      )}
+      {currentPage === 'notifications' && (
+        <Notifications 
+          onBack={() => setCurrentPage('home')} 
+          onNavigate={handleAppNavigation} 
+        />
+      )}
+     {currentPage === 'simpleBottomnav' && (
+  <SimpleBottomNav
+    onNavigate={setCurrentPage}
+    activeTab={currentPage}
+  />
 )}
-          {currentPage === 'invoices' && (
-            <div style={{ padding: '20px' }}>
-              <h2>Invoices Page</h2>
-              <button onClick={() => setCurrentPage('home')}>Back to Home</button>
-            </div>
-          )}
+      {currentPage === 'history' && (
+        <History 
+          onBack={() => setCurrentPage('home')} 
+          onNavigate={handleAppNavigation} 
+          isMenuOpen={isMenuOpen} 
+          setIsMenuOpen={setIsMenuOpen}
+          tenantIdProp={loggedInTenantId}
+        />
+      )}
 
           {/* Correct Side Drawer Component for Tenant */}
           <Side 
@@ -134,9 +154,13 @@ function App() {
             editData={editingTenantData} 
           />
         )}
-        {currentPage === 'history' && (
-          <TenantHistory onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
-        )}
+      {currentPage === 'history' && (
+  <TenantHistory 
+    onBack={() => setCurrentPage('home')} 
+    onNavigate={handleAppNavigation} 
+    selectedUnitId={selectedTenantData}
+  />
+)}
         {currentPage === 'tenantList' && (
           <TenantList 
             onBack={() => setCurrentPage('home')} 
@@ -147,9 +171,13 @@ function App() {
         {currentPage === 'unit-ledger' && (
           <UnitLedger onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
         )}
-        {currentPage === 'profile' && (
-          <TenantProfile onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
-        )}
+       {currentPage === 'profile' && (
+  <TenantProfile 
+    onBack={() => setCurrentPage('home')} 
+    onNavigate={handleAppNavigation} 
+    selectedUnitId={selectedTenantData}
+  />
+)}
         {currentPage === 'notifications' && (
           <Notifications onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
         )}

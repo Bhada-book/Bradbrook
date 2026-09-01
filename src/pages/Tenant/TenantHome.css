@@ -12,7 +12,7 @@ body {
 }
 
 .tenant-container {
-     background-image: url("/images/back.png");
+  
   width: 100%;
   
 
@@ -39,10 +39,10 @@ body {
 }
 
 .building-label {
-  font-size: 10px;
+  font-size: 13px;
   color: #252323;
   text-align: left;
-  margin-left: -30px;
+margin-right: 180px;
 }
 
 .room-number {

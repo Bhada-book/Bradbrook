@@ -19,7 +19,7 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
   // If the user is an Admin/Landlord or Manager, include administrative options
   if (!isCollector) {
     menuOptions.push(
-      { name: 'Admin Profile', page: 'adminProfile' },
+      { name: 'Profile', page: 'adminProfile' },
       { name: 'Add Manager', page: 'addManager' },
       { name: 'Add Collector', page: 'addCollector' }
     );
