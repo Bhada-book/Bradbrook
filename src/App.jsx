@@ -148,6 +148,9 @@ function App() {
           {currentPage === 'unit-ledger' && (
             <UnitLedger onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
           )}
+          {currentPage === 'property' && (
+            <PropertyDetails onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
+          )}
       
         {currentPage === 'adminProfile' && (
             <AdminProfile 
