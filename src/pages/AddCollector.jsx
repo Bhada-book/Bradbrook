@@ -10,6 +10,7 @@ export default function AddCollector({ onBack, onNavigate, editData }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
   const [notificationsData, setNotificationsData] = useState([]); 
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
@@ -96,24 +97,29 @@ export default function AddCollector({ onBack, onNavigate, editData }) {
     }
   };
 
+  // Add an effect to fetch notifications if they come from Firestore, for example:
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
   return (
     <div className="building-container">
       {/* --- TOP NAVBAR --- */}
-     <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
 
       {/* --- MAIN CONTENT AREA --- */}
       <main className="building-content">

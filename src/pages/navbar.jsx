@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import SideMenuDrawer from './SideMenuDrawer';
 
-export default function Navbar({ onNavigate, notificationsData = [] }) {
+export default function Navbar({ onNavigate, notificationsData = [], searchQuery = '', setSearchQuery }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
   const isAdmin = userRole === 'Admin/Landlord';
 
-  // Safely check for pending notifications even if notificationsData is accidentally passed as non-array
   const hasPendingNotifications = Array.isArray(notificationsData) 
     ? notificationsData.some(n => n && n.status === 'Pending') 
     : false;
@@ -21,8 +20,14 @@ export default function Navbar({ onNavigate, notificationsData = [] }) {
         <div className="nav-right-icons">
           <div className="search-box">
             <span className="search-icon"><img src="images/Vector.png" alt="Search" /></span>
-            <input type="text" placeholder="Search" />
+            <input 
+              type="text" 
+              placeholder="Search units, tenants..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery ? setSearchQuery(e.target.value) : null}
+            />
           </div>
+          
           {isAdmin && (
             <button 
               className="icon-btn notification-btn" 

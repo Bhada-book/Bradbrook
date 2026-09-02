@@ -26,6 +26,9 @@ export default function PropertyDetails({ onBack, onNavigate, editData }) {
     status: 'Vacant'
   });
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationsData, setNotificationsData] = useState([]);
+
   // Automatically fill the form if editData is passed
   useEffect(() => {
     if (editData) {
@@ -63,6 +66,20 @@ export default function PropertyDetails({ onBack, onNavigate, editData }) {
     fetchBuildings();
   }, []);
 
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -113,26 +130,16 @@ export default function PropertyDetails({ onBack, onNavigate, editData }) {
       alert('Failed to save property details.');
     }
   };
-// Add this state near your other state initializations
-const [notificationsData, setNotificationsData] = useState([]);
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
   return (
     <div className="property-container">
       {/* --- TOP NAVBAR --- */}
-<Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       {/* --- MAIN CONTENT AREA --- */}
       <main className="property-content">
         <div className="form-header">

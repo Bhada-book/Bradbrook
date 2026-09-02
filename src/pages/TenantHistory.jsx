@@ -10,7 +10,7 @@ import Navbar from './navbar.jsx';
 
 export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
  
-  
+ 
   // Dropdown filter states
   const [propertiesList, setPropertiesList] = useState([]);
   const [buildingsList, setBuildingsList] = useState([]);
@@ -23,6 +23,7 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
   const [tenantData, setTenantData] = useState(null);
   const [allHistoryData, setAllHistoryData] = useState([]);
   const [filteredHistoryData, setFilteredHistoryData] = useState([]);
+  const [searchedHistoryData, setSearchedHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Profile expand/collapse toggle state
@@ -36,6 +37,8 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
   // Check user role for permissions (Admin vs Collector vs Manager)
   const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
   const isAdmin = userRole === 'Admin/Landlord';
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationsData, setNotificationsData] = useState([]);
 
   // 1. Fetch available properties/units on mount with Collector Property Restrictions
   useEffect(() => {
@@ -47,7 +50,7 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
         const querySnapshot = await getDocs(collection(db, 'properties'));
         let props = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // IF COLLECTOR: Filter list to only show properties permitted by the admin[cite: 12]
+        // IF COLLECTOR: Filter list to only show properties permitted by the admin
         if (userRole === 'Collector') {
           props = props.filter(p => allowedProps.includes(p.propertyName) || allowedProps.includes(p.buildingOrComplex) || allowedProps.includes(p.propertyId));
         }
@@ -175,6 +178,37 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     }
   }, [allHistoryData, selectedYear]);
 
+  // 4. Filter history by search query and year-filtered data
+  useEffect(() => {
+    const query = searchQuery.toLowerCase();
+    const baseList = selectedYear === 'All' ? allHistoryData : allHistoryData.filter(item => item.year === selectedYear);
+    
+    if (!query.trim()) {
+      setSearchedHistoryData(baseList);
+    } else {
+      const filtered = baseList.filter(item => 
+        item.title.toLowerCase().includes(query) ||
+        item.amount.toString().toLowerCase().includes(query) ||
+        item.date.toLowerCase().includes(query)
+      );
+      setSearchedHistoryData(filtered);
+    }
+  }, [searchQuery, allHistoryData, selectedYear]);
+
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
   const handleBuildingChange = (e) => {
     const bldg = e.target.value;
     setSelectedBuilding(bldg);
@@ -287,23 +321,17 @@ export default function TenantHistory({ onBack, onNavigate, selectedUnitId }) {
     const tenantName = tenantData ? `${tenantData.name || ''} ${tenantData.surname || ''}`.trim() : 'Sandeep Ghige';
     alert(`Transaction Details:\n\nUnit: ${unitName}\nTenant: ${tenantName}\nType: ${item.title}\nAmount: Rs.${item.amount}\nDate: ${item.date}`);
   };
-const [notificationsData, setNotificationsData] = useState([]);
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
+
   return (
     <div className="tenant-history-container">
       {/* --- TOP NAVBAR --- */}
-  <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
+      
       {/* --- MAIN CONTENT --- */}
       <main className="tenant-history-content">
         <div className="form-header" style={{ marginBottom: "5px", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -453,8 +481,8 @@ useEffect(() => {
         <div className="history-list">
           {loading ? (
             <p style={{ padding: '20px', textAlign: 'center' }}>Loading history...</p>
-          ) : filteredHistoryData.length > 0 ? (
-            filteredHistoryData.map((item, index) => (
+          ) : searchedHistoryData.length > 0 ? (
+            searchedHistoryData.map((item, index) => (
               <div className="history-row" key={index}>
                 <div className="history-item-title">
                   {item.title} <span style={{ fontSize: '10px', color: '#888', marginLeft: '6px' }}>({item.year})</span>
@@ -473,7 +501,7 @@ useEffect(() => {
             ))
           ) : (
             <p style={{ padding: '25px', textAlign: 'center', color: '#777', fontSize: '13px' }}>
-              No history records found for {selectedYear} in unit {currentUnitId}.
+              No matching history records found for "{searchQuery}".
             </p>
           )}
         </div>

@@ -3,12 +3,11 @@ import './BuildingDetails.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js'; 
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import Navbar from './navbar.jsx';
 
 export default function BuildingDetails({ onBack, onNavigate, editData }) {
 
-  
   // State to hold form input values
   const [formData, setFormData] = useState({
     propertyNickname: '',
@@ -20,6 +19,9 @@ export default function BuildingDetails({ onBack, onNavigate, editData }) {
     city: '',
     pinCode: ''
   });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationsData, setNotificationsData] = useState([]);
 
   // Automatically fill the form if editData is passed
   useEffect(() => {
@@ -74,27 +76,30 @@ export default function BuildingDetails({ onBack, onNavigate, editData }) {
       alert('Failed to save building details.');
     }
   };
-  // Add this state near your other state initializations
-const [notificationsData, setNotificationsData] = useState([]);
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
 
   return (
     <div className="building-container">
       {/* --- TOP NAVBAR --- */}
-  <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       {/* --- MAIN CONTENT AREA --- */}
       <main className="building-content">
         <div className="form-header">

@@ -12,6 +12,7 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
   const [profilesData, setProfilesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notificationsData, setNotificationsData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
   const isAdmin = userRole === 'Admin/Landlord';
@@ -62,6 +63,24 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
     };
   }, [isAdmin, loggedInUser.id, loggedInUser.email, loggedInUser.mobile]);
 
+  // Filter profiles based on searchQuery
+  const filteredProfiles = profilesData.filter((profile) => {
+    const query = searchQuery.toLowerCase();
+    const fullName = `${profile.name || ''} ${profile.surname || ''}`.toLowerCase();
+    const mobile = (profile.mobile || profile.phone || '').toLowerCase();
+    const email = (profile.email || '').toLowerCase();
+    const role = (profile.role || '').toLowerCase();
+    const city = (profile.city || '').toLowerCase();
+
+    return (
+      fullName.includes(query) ||
+      mobile.includes(query) ||
+      email.includes(query) ||
+      role.includes(query) ||
+      city.includes(query)
+    );
+  });
+
   // Fetch notifications for the Navbar
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -105,7 +124,12 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
   return (
     <div className="admin-profile-container">
       {/* --- TOP NAVBAR --- */}
-      <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
 
       {/* --- MAIN CONTENT --- */}
       <main className="admin-profile-content">
@@ -118,10 +142,10 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
         {/* PROFILES LIST CARDS */}
         {loading ? (
           <p style={{ padding: '20px', textAlign: 'center' }}>Loading profiles...</p>
-        ) : profilesData.length === 0 ? (
+        ) : filteredProfiles.length === 0 ? (
           <p style={{ padding: '20px', textAlign: 'center', color: '#777' }}>No profile found.</p>
         ) : (
-          profilesData.map((profile) => (
+          filteredProfiles.map((profile) => (
             <div className="admin-profile-card" key={profile.id} style={{ marginBottom: '16px', borderBottom: '1px solid #e0e0e0', paddingBottom: '16px' }}>
               <div className="admin-card-header">
                 <div>
@@ -154,7 +178,7 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
           ))
         )}
 
-        {/* ACTION BUTTONS (As requested, buttons remain visible) */}
+        {/* ACTION BUTTONS */}
         <div className="admin-action-buttons">
           <button 
             className="add-landlord-btn" 
@@ -183,4 +207,4 @@ export default function AdminProfile({ onBack, onNavigate, onEditProfile }) {
       <BottomNavWithPopup onNavigate={onNavigate} currentActive="profile" />
     </div>
   );
-}
+}  

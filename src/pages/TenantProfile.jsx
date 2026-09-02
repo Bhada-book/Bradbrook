@@ -13,6 +13,23 @@ export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationsData, setNotificationsData] = useState([]);
+
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
   // Fetch tenant, unit, and payment history data from Firebase Firestore
   useEffect(() => {
     const fetchTenantDetails = async () => {
@@ -116,26 +133,16 @@ export default function TenantProfile({ onBack, onNavigate, selectedUnitId }) {
       }
     }
   };
-// Add this state near your other state initializations
-const [notificationsData, setNotificationsData] = useState([]);
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
   return (
     <div className="tenant-profile-container">
       {/* --- TOP NAVBAR --- */}
-  <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       {/* --- MAIN CONTENT --- */}
       <main className="tenant-profile-content">
         <div className="form-header" style={{ marginBottom: '9px' }}>

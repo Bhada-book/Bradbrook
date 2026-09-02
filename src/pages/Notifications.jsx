@@ -4,13 +4,14 @@ import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import Navbar from './navbar.jsx'; // <-- Imported Navbar component
 import { db } from '../firebase.js';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { FaTimes, FaCheck, FaBan } from 'react-icons/fa';
 
 export default function Notifications({ onBack, onNavigate }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notificationsData, setNotificationsData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Filter state: 'All', 'Pending', 'Approved', 'Rejected'
   const [activeTab, setActiveTab] = useState('Pending');
@@ -38,6 +39,8 @@ export default function Notifications({ onBack, onNavigate }) {
           mode: data.mode || 'Offline Transfer',
           status: data.status || 'Pending',
           receiptUrl: data.receiptUrl || '',
+          targetCollection: data.targetCollection || null,
+          targetDocumentId: data.targetDocumentId || null,
           statusClass
         };
       });
@@ -53,7 +56,6 @@ export default function Notifications({ onBack, onNavigate }) {
   const isAdmin = userRole === 'Admin/Landlord';
 
   // Function to handle status updates (Approved / Rejected)
-// Updated handleUpdateStatus function inside Notifications.jsx
   const handleUpdateStatus = async (id, newStatus) => {
     try {
       const notifRef = doc(db, 'notifications', id);
@@ -78,30 +80,29 @@ export default function Notifications({ onBack, onNavigate }) {
       alert("Failed to update status.");
     }
   };
+
   // Filter notifications based on the selected tab
   const filteredNotifications = notificationsData.filter(item => {
-    if (activeTab === 'All') return true;
-    return item.status.toLowerCase() === activeTab.toLowerCase();
-  });
+    const query = searchQuery.toLowerCase();
+    const title = (item.title || '').toLowerCase();
+    const mode = (item.mode || '').toLowerCase();
+    const date = (item.date || '').toLowerCase();
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
+    const matchesSearch = title.includes(query) || mode.includes(query) || date.includes(query);
+
+    if (activeTab === 'All') return matchesSearch;
+    return item.status.toLowerCase() === activeTab.toLowerCase() && matchesSearch;
+  });
 
   return (
     <div className="notifications-container">
       {/* --- TOP NAVBAR --- */}
-      <Navbar onNavigate={onNavigate} notificationsData={notificationsData} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
 
       {/* --- SIDE MENU DRAWER --- */}
       <SideMenuDrawer 

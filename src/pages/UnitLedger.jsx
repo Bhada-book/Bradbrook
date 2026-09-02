@@ -31,6 +31,7 @@ export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
   });
   const [loading, setLoading] = useState(true);
   const [notificationsData, setNotificationsData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // 1. Fetch properties & buildings on mount for filter dropdowns
   useEffect(() => {
@@ -179,7 +180,12 @@ export default function UnitLedger({ onBack, onNavigate, selectedUnitId }) {
 
   return (
     <div className="unit-ledger-container" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
 
       <main className="unit-ledger-content">
         <div className="form-header" style={{ marginBottom: '9px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

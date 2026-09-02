@@ -8,7 +8,7 @@ import Navbar from './navbar.jsx';
 
 export default function PropertyDetails({ onBack, onNavigate }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState('');
   // State for dynamic Firebase data
   const [properties, setProperties] = useState([]);
   const [tenants, setTenants] = useState([]);
@@ -60,6 +60,25 @@ export default function PropertyDetails({ onBack, onNavigate }) {
       unsubscribeNotifications();
     };
   }, []);
+
+  // Filter all properties/units based on search query (unit number, building name, or tenant name)
+  const filteredProperties = (properties || []).filter((unit) => {
+    const query = searchQuery.toLowerCase();
+    
+    const tenant = tenants.find(t => 
+      String(t.propertyOrUnit || t.propertyUnit || '').trim().toLowerCase() === String(unit.propertyName || '').trim().toLowerCase()
+    ) || {};
+    
+    const tenantName = `${tenant.name || ''} ${tenant.surname || ''}`.toLowerCase();
+    const unitNumber = (unit.propertyName || '').toLowerCase();
+    const buildingName = (unit.buildingOrComplex || '').toLowerCase();
+
+    return (
+      tenantName.includes(query) ||
+      unitNumber.includes(query) ||
+      buildingName.includes(query)
+    );
+  });
 // Year-wise calculation logic
 const calculateYearlyTotals = () => {
   let totalReceived = 0;
@@ -108,9 +127,10 @@ const yearlySummary = calculateYearlyTotals();
   // Get unique list of properties/buildings for the property dropdown filter
   const uniqueBuildings = ['All', ...new Set(properties.map(p => p.buildingOrComplex).filter(Boolean))];
 
-  // Base classification
-  const occupiedUnitsRaw = properties.filter(p => isUnitOccupied(p));
-  const vacantUnitsRaw = properties.filter(p => !isUnitOccupied(p));
+
+ // Base classification using filtered properties
+  const occupiedUnitsRaw = filteredProperties.filter(p => isUnitOccupied(p));
+  const vacantUnitsRaw = filteredProperties.filter(p => !isUnitOccupied(p));
 
   // Apply filters to Occupied Units
   const occupiedUnits = occupiedUnitsRaw.filter(unit => {
@@ -130,10 +150,17 @@ const yearlySummary = calculateYearlyTotals();
     return selectedVacantPropertyFilter === 'All' || unit.buildingOrComplex === selectedVacantPropertyFilter;
   });
 
+  
+
   return (
     <div className="home-container" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* --- TOP NAVBAR --- */}
-      <Navbar onNavigate={onNavigate} notificationsData={notificationsData} />
+  <Navbar 
+  onNavigate={onNavigate} 
+  notificationsData={notificationsData} 
+  searchQuery={searchQuery} 
+  setSearchQuery={setSearchQuery} 
+/>
 
       {/* --- MAIN CONTENT SCROLLABLE AREA --- */}
       <main className="home-content">

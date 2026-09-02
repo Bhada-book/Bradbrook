@@ -4,29 +4,29 @@ import './SideMenuDrawer.css';
 export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
   if (!isOpen) return null;
 
-  // Retrieve user role to conditionally hide restricted menu items
   const userRole = localStorage.getItem('userRole') || 'Admin/Landlord';
   const isCollector = userRole === 'Collector';
 
-  // Base menu options available to all roles
-  let menuOptions = [
-    { name: 'Tenant History', page: 'history'},
-    { name: 'Tenant List', page: 'tenantList' },
-    { name: 'Unit Ledger / Payments', page: 'unit-ledger' },
-  
-  ];
+  let menuOptions = [];
 
-  // If the user is an Admin/Landlord or Manager, include administrative options
-  if (!isCollector) {
-    menuOptions.push(
-      { name: 'Profile', page: 'adminProfile' },
+  if (isCollector) {
+    menuOptions = [
+     { name: 'Profile', page: 'adminProfile' },
+       {  name: 'Tenant List', page: 'tenantList' },
+      { name: 'Add Tenant', page: 'tenant' }
+    ];
+  } else {
+    menuOptions = [
+      { name: 'Tenant History', page: 'history' },
+      { name: 'Unit Ledger / Payments', page: 'unit-ledger' },
       { name: 'Add Manager', page: 'addManager' },
-      { name: 'Add Collector', page: 'addCollector' }
-    );
+      { name: 'Add Collector', page: 'addCollector' },
+           { name: 'Profile', page: 'adminProfile' },
+       {  name: 'Tenant List', page: 'tenantList' },
+    ];
   }
 
   const handleLogout = () => {
-    // Clear user role and session data from localStorage
     localStorage.removeItem('userRole');
     localStorage.removeItem('userData');
     localStorage.removeItem('allowedProperties');
@@ -67,7 +67,6 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
             </button>
           ))}
 
-          {/* Logout Menu Option */}
           <button 
             className="side-menu-item logout-item"
             onClick={handleLogout}

@@ -3,7 +3,7 @@ import './AddManager.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import Navbar from './navbar.jsx';
 
 export default function AdminDetail({ onBack, onNavigate, adminData }) {
@@ -18,6 +18,9 @@ export default function AdminDetail({ onBack, onNavigate, adminData }) {
     city: '',
     pinCode: ''
   });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationsData, setNotificationsData] = useState([]);
 
   // Automatically populate data when loaded
   useEffect(() => {
@@ -57,26 +60,30 @@ export default function AdminDetail({ onBack, onNavigate, adminData }) {
       alert('Failed to update profile.');
     }
   };
-// Add this state near your other state initializations
-const [notificationsData, setNotificationsData] = useState([]);
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
   return (
     <div className="building-container">
       {/* --- TOP NAVBAR --- */}
-  <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       {/* --- MAIN CONTENT AREA --- */}
       <main className="building-content">
         <div className="form-header" style={{ display: 'flex', alignItems: 'center' }}>

@@ -3,7 +3,7 @@ import './TenantList.css';
 import BottomNavWithPopup from './BottomNavWithPopup';
 import SideMenuDrawer from './SideMenuDrawer';
 import { db } from '../firebase.js';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import Navbar from './navbar.jsx';
 
@@ -19,6 +19,9 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
   const [editingTenant, setEditingTenant] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({});
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationsData, setNotificationsData] = useState([]);
 
   // Fetch tenants real-time from Firebase Firestore
   useEffect(() => {
@@ -40,7 +43,7 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
         setTenantsData(tenantList);
       } else {
         setTenantsData([
-          { id: '1', name: 'Sandeep Ghige', unitId: '101', since: '01/03/2026', phone: '9876543210', email: 'sandeep@example.com' },
+          { id: '1', name: 'Sandeep Ghige', unitId: '101', since: '01/03/2026', phone: '9876543210', email: 'sandeep@example.com', buildingOrComplex: '', propertyOrUnit: '101' },
         ]);
       }
       setLoading(false);
@@ -48,6 +51,36 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
 
     return () => unsubscribe();
   }, []);
+
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  // Filtered tenants based on search query
+  const filteredTenants = tenantsData.filter((tenant) => {
+    const query = searchQuery.toLowerCase();
+    const tenantName = (tenant.name || '').toLowerCase();
+    const unitNumber = (tenant.unitId || tenant.propertyOrUnit || '').toLowerCase();
+    const buildingName = (tenant.buildingOrComplex || '').toLowerCase();
+    const mobile = (tenant.mobile || tenant.phone || '').toLowerCase();
+  
+    return (
+      tenantName.includes(query) ||
+      unitNumber.includes(query) ||
+      buildingName.includes(query) ||
+      mobile.includes(query)
+    );
+  });
 
   const handleViewClick = (tenant) => {
     setSelectedTenant(tenant);
@@ -68,7 +101,7 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
 
     let startY = 36;
 
-    tenantsData.forEach((tenant, index) => {
+    filteredTenants.forEach((tenant, index) => {
       if (startY > 250) {
         docPdf.addPage();
         startY = 20;
@@ -113,7 +146,7 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
     if (!tenant) return;
 
     let message = `*Tenant Details Report*%0A%0A`;
-    message += `*Name:* ${tenant.name || ''} ${tenant.surname || ''}%0A`;
+    message += `*Name:* ${tenant.name || ''}%0A`;
     message += `*Building/Complex:* ${tenant.buildingOrComplex || 'N/A'}%0A`;
     message += `*Property/Unit:* ${tenant.propertyOrUnit || tenant.unitId || 'N/A'}%0A`;
     message += `*Mobile:* ${tenant.mobile || tenant.phone || 'N/A'}%0A`;
@@ -139,7 +172,7 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
     }
   };
 
-  // Function to Download Selected Single Tenant PDF (Includes Links to Document, Agreement, & Photos)
+  // Function to Download Selected Single Tenant PDF
   const handleDownloadSinglePDF = (tenant) => {
     const docPdf = new jsPDF();
 
@@ -165,7 +198,7 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
       { label: 'Monthly Rental', value: tenant.totalMonthlyRental ? `Rs. ${tenant.totalMonthlyRental}` : 'N/A' },
       { label: 'Monthly Payment Mode', value: tenant.monthlyPayment || 'N/A' },
       { label: 'Agreement End Date', value: tenant.agreementEndDate || 'N/A' },
-      { label: 'Document (Aadhar/Pan)', value: tenant.document ? 'Available (Click to View)' : 'Not Uploaded', link: tenant.document },
+      { label: 'Document', value: tenant.document ? 'Available (Click to View)' : 'Not Uploaded', link: tenant.document },
       { label: 'Agreement Copy', value: tenant.agreementCopy ? 'Available (Click to View)' : 'Not Uploaded', link: tenant.agreementCopy }
     ];
 
@@ -194,7 +227,6 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
       startY += 10;
     });
 
-    // Add Property Photos Links into PDF if available
     if (tenant.propertyPhotos && tenant.propertyPhotos.length > 0) {
       if (startY > 250) { docPdf.addPage(); startY = 20; }
       docPdf.setTextColor(179, 0, 0);
@@ -211,25 +243,15 @@ export default function TenantList({ onBack, onNavigate, onEditTenant }) {
 
     docPdf.save(`${(tenant.name || 'Tenant').replace(/\s+/g, '_')}_Details.pdf`);
   };
-// Add this state near your other state initializations
-const [notificationsData, setNotificationsData] = useState([]);
 
-// Add an effect to fetch notifications if they come from Firestore, for example:
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notifications'));
-      const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotificationsData(notifs);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  fetchNotifications();
-}, []);
   return (
     <div className="tenant-list-container">
-   <Navbar notificationsData={notificationsData} onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       <main className="tenant-list-content">
         <div className="form-header" style={{ marginBottom: '9px' }}>
           <button className="back-btn" aria-label="Go Back" onClick={onBack}>←</button>
@@ -247,8 +269,10 @@ useEffect(() => {
 
           {loading ? (
             <p style={{ padding: '20px', textAlign: 'center' }}>Loading tenants...</p>
+          ) : filteredTenants.length === 0 ? (
+            <p style={{ padding: '20px', textAlign: 'center' }}>No tenants found matching your search.</p>
           ) : (
-            tenantsData.map((tenant, index) => (
+            filteredTenants.map((tenant, index) => (
               <div className="table-data-row" key={tenant.id || index}>
                 <span className="col-name">{tenant.name}</span>
                 <span className="col-unit">{tenant.unitId}</span>
@@ -275,7 +299,7 @@ useEffect(() => {
             type="button" 
             className="send-tenant-btn" 
             style={{ marginTop: '10px' }}
-            onClick={() => handleShareTenantWhatsApp(selectedTenant)}
+            onClick={() => handleShareTenantWhatsApp(selectedTenant || filteredTenants[0])}
           >
             <span className="whatsapp-icon">
               <img src='images/whatsup.png' style={{ height: '18px' }} alt="WhatsApp" />
@@ -303,11 +327,9 @@ useEffect(() => {
               <p><strong>Security Deposit:</strong> {selectedTenant.securityDeposit ? `₹${selectedTenant.securityDeposit}` : 'N/A'}</p>
               <p><strong>Monthly Rental:</strong> {selectedTenant.totalMonthlyRental ? `₹${selectedTenant.totalMonthlyRental}` : 'N/A'}</p>
               
-              {/* Document & Agreement Links in View Modal */}
-              <p><strong>Document (Aadhar/Pan):</strong> {selectedTenant.document ? <a href={selectedTenant.document} target="_blank" rel="noopener noreferrer">View Document</a> : 'N/A'}</p>
+              <p><strong>Document:</strong> {selectedTenant.document ? <a href={selectedTenant.document} target="_blank" rel="noopener noreferrer">View Document</a> : 'N/A'}</p>
               <p><strong>Agreement Copy:</strong> {selectedTenant.agreementCopy ? <a href={selectedTenant.agreementCopy} target="_blank" rel="noopener noreferrer">View Agreement</a> : 'N/A'}</p>
 
-              {/* Handover Property Photos Viewer Section */}
               <div style={{ marginTop: '15px' }}>
                 <p><strong>Handover Property Photos:</strong></p>
                 {selectedTenant.propertyPhotos && selectedTenant.propertyPhotos.length > 0 ? (

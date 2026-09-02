@@ -11,6 +11,8 @@ export default function TenantList({ onNavigate, onEdit }) {
   
   const [selectedBuilding, setSelectedBuilding] = useState('');
   const [selectedProperty, setSelectedProperty] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationsData, setNotificationsData] = useState([]);
 
   useEffect(() => {
     const fetchTenants = async () => {
@@ -33,19 +35,56 @@ export default function TenantList({ onNavigate, onEdit }) {
   }, []);
 
   useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        const notifs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotificationsData(notifs);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
     let result = tenants;
+
     if (selectedBuilding) {
       result = result.filter(t => t.buildingOrComplex === selectedBuilding);
     }
     if (selectedProperty) {
       result = result.filter(t => t.propertyOrUnit === selectedProperty);
     }
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(t => {
+        const tenantName = `${t.name || ''} ${t.surname || ''}`.toLowerCase();
+        const unitNumber = (t.propertyOrUnit || t.unitId || '').toLowerCase();
+        const buildingName = (t.buildingOrComplex || '').toLowerCase();
+        const mobile = (t.mobile || '').toLowerCase();
+
+        return (
+          tenantName.includes(query) ||
+          unitNumber.includes(query) ||
+          buildingName.includes(query) ||
+          mobile.includes(query)
+        );
+      });
+    }
+
     setFilteredTenants(result);
-  }, [selectedBuilding, selectedProperty, tenants]);
+  }, [selectedBuilding, selectedProperty, searchQuery, tenants]);
 
   return (
     <div className="tenant-container">
-      <Navbar onNavigate={onNavigate} />
+      <Navbar 
+        onNavigate={onNavigate} 
+        notificationsData={notificationsData} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+      />
       <main className="tenant-content">
         <h2>Tenant Information List</h2>
         

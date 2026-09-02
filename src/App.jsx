@@ -20,10 +20,12 @@ import Overdue from './pages/Tenant/Overdue';
 import DocumentViewer from './pages/DocumentViewer';
 import AdminApprovalNotifications from './pages/AdminApprovalNotifications';
 import Side from './pages/Tenant/Side';
-import History from '../src/pages/Tenant/History'
-import Profile from '../src/pages/Tenant/Profile'
+import SideMenuDrawer from './pages/SideMenuDrawer';
+import History from '../src/pages/Tenant/History';
+import Profile from '../src/pages/Tenant/Profile';
 import Navbar from './pages/navbar';
 import SimpleBottomNav from './pages/Tenant/SimpleBottomNav';
+import CollectorHome from './pages/Collector/Collectorhome';
 
 // Import Tenant Specific Pages
 import TenantHome from './pages/Tenant/TenantHome';
@@ -37,14 +39,13 @@ function App() {
   const [selectedTenantData, setSelectedTenantData] = useState(null);
 
   // Centralized navigation handler
- // Centralized navigation handler
   const handleAppNavigation = (page) => {
     if (page === 'login' || page === 'logout') {
       localStorage.removeItem('userRole');
       localStorage.removeItem('userData');
       localStorage.removeItem('allowedProperties');
       
-      setCurrentStep('login'); // This switches the main view back to Login
+      setCurrentStep('login'); 
       setCurrentPage('home');
     } else {
       setCurrentPage(page);
@@ -75,61 +76,58 @@ function App() {
   }
 
   if (currentStep === 'dashboard') {
-    const userRole = localStorage.getItem('userRole');
+    const rawRole = localStorage.getItem('userRole') || '';
+    const userRole = rawRole.trim().toLowerCase();
 
     // Route 1: Tenant Dashboard Flow
-  if (userRole === 'Tenant') {
-  // Get the real tenant ID stored during login
-  const loggedInTenantId = localStorage.getItem('tenantId') || "ONRiTsjWb2sbqr3j2u6A";
+    if (userRole === 'tenant') {
+      const loggedInTenantId = localStorage.getItem('tenantId') || "ONRiTsjWb2sbqr3j2u6A";
 
-  return (
-    <div className="app-container">
-      {currentPage === 'home' && (
-        <TenantHome 
-          onNavigate={handleAppNavigation} 
-          isMenuOpen={isMenuOpen} 
-          setIsMenuOpen={setIsMenuOpen}
-          tenantIdProp={loggedInTenantId} 
-        />
-      )}
-   
-      {currentPage === 'profile' && (
-        <Profile 
-          onBack={() => setCurrentPage('home')} 
-          onNavigate={handleAppNavigation} 
-          tenantIdProp={loggedInTenantId}
-        />
-      )}
-      {currentPage === 'notifications' && (
-        <Notifications 
-          onBack={() => setCurrentPage('home')} 
-          onNavigate={handleAppNavigation} 
-        />
-      )}
-     {currentPage === 'simpleBottomnav' && (
-  <SimpleBottomNav
-    onNavigate={setCurrentPage}
-    activeTab={currentPage}
-  />
-)}
-      {currentPage === 'history' && (
-        <History 
-          onBack={() => setCurrentPage('home')} 
-          onNavigate={handleAppNavigation} 
-          isMenuOpen={isMenuOpen} 
-          setIsMenuOpen={setIsMenuOpen}
-          tenantIdProp={loggedInTenantId}
-        />
-      )}
-      {currentPage === 'overdue' && (
-          <Overdue 
-            onBack={() => setCurrentPage('home')} 
-            onNavigate={handleAppNavigation} 
-            selectedUnitId={loggedInTenantId} 
-          />
-        )}
-
-          {/* Correct Side Drawer Component for Tenant */}
+      return (
+        <div className="app-container">
+          {currentPage === 'home' && (
+            <TenantHome 
+              onNavigate={handleAppNavigation} 
+              isMenuOpen={isMenuOpen} 
+              setIsMenuOpen={setIsMenuOpen}
+              tenantIdProp={loggedInTenantId} 
+            />
+          )}
+          {currentPage === 'profile' && (
+            <Profile 
+              onBack={() => setCurrentPage('home')} 
+              onNavigate={handleAppNavigation} 
+              tenantIdProp={loggedInTenantId}
+            />
+          )}
+          {currentPage === 'notifications' && (
+            <Notifications 
+              onBack={() => setCurrentPage('home')} 
+              onNavigate={handleAppNavigation} 
+            />
+          )}
+          {currentPage === 'simpleBottomnav' && (
+            <SimpleBottomNav
+              onNavigate={setCurrentPage}
+              activeTab={currentPage}
+            />
+          )}
+          {currentPage === 'history' && (
+            <History 
+              onBack={() => setCurrentPage('home')} 
+              onNavigate={handleAppNavigation} 
+              isMenuOpen={isMenuOpen} 
+              setIsMenuOpen={setIsMenuOpen}
+              tenantIdProp={loggedInTenantId}
+            />
+          )}
+          {currentPage === 'overdue' && (
+            <Overdue 
+              onBack={() => setCurrentPage('home')} 
+              onNavigate={handleAppNavigation} 
+              selectedUnitId={loggedInTenantId} 
+            />
+          )}
           <Side 
             isOpen={isMenuOpen} 
             onClose={() => setIsMenuOpen(false)} 
@@ -139,7 +137,51 @@ function App() {
       );
     }
 
-    // Route 2: Admin / Manager / Collector Dashboard Flow
+    // Route 2: Collector Dashboard Flow
+  // Route 2: Collector Dashboard Flow
+    if (userRole === 'collector') {
+      return (
+        <div className="app-container">
+          {currentPage === 'home' && (
+            <CollectorHome onNavigate={handleAppNavigation} />
+          )}
+          {currentPage === 'unit-ledger' && (
+            <UnitLedger onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
+          )}
+      
+        {currentPage === 'adminProfile' && (
+            <AdminProfile 
+              onBack={() => setCurrentPage('home')} 
+              onNavigate={handleAppNavigation} 
+              onEditProfile={(profile) => setSelectedProfile(profile)}
+            />
+          )}
+          {currentPage === 'tenantList' && (
+            <TenantList 
+              onBack={() => setCurrentPage('home')} 
+              onNavigate={handleAppNavigation} 
+              onEditTenant={(tenant) => { setEditingTenantData(tenant); setCurrentPage('tenant'); }}
+            />
+          )}
+          {currentPage === 'tenant' && (
+            <TenantInformation 
+              onBack={() => { setEditingTenantData(null); setCurrentPage('tenantList'); }} 
+              onNavigate={(page) => { setEditingTenantData(null); handleAppNavigation(page); }} 
+              editData={editingTenantData} 
+            />
+          )}
+          
+          {/* Yithe Side aivji SideMenuDrawer vapara */}
+          <SideMenuDrawer 
+            isOpen={isMenuOpen} 
+            onClose={() => setIsMenuOpen(false)} 
+            onNavigate={handleAppNavigation} 
+          />
+        </div>
+      );
+    }
+
+    // Route 3: Admin / Manager Dashboard Flow
     return (
       <div className="app-container">
         {currentPage === 'home' && (
@@ -151,7 +193,6 @@ function App() {
         {currentPage === 'navbar' && (
           <Navbar onBack={() => setCurrentPage ('navbar')} onNavigate={handleAppNavigation} />
         )}
-      
         {currentPage === 'property' && (
           <PropertyDetails onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
         )}
@@ -162,13 +203,13 @@ function App() {
             editData={editingTenantData} 
           />
         )}
-      {currentPage === 'history' && (
-  <TenantHistory 
-    onBack={() => setCurrentPage('home')} 
-    onNavigate={handleAppNavigation} 
-    selectedUnitId={selectedTenantData}
-  />
-)}
+        {currentPage === 'history' && (
+          <TenantHistory 
+            onBack={() => setCurrentPage('home')} 
+            onNavigate={handleAppNavigation} 
+            selectedUnitId={selectedTenantData}
+          />
+        )}
         {currentPage === 'tenantList' && (
           <TenantList 
             onBack={() => setCurrentPage('home')} 
@@ -179,13 +220,13 @@ function App() {
         {currentPage === 'unit-ledger' && (
           <UnitLedger onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
         )}
-       {currentPage === 'profile' && (
-  <TenantProfile 
-    onBack={() => setCurrentPage('home')} 
-    onNavigate={handleAppNavigation} 
-    selectedUnitId={selectedTenantData}
-  />
-)}
+        {currentPage === 'profile' && (
+          <TenantProfile 
+            onBack={() => setCurrentPage('home')} 
+            onNavigate={handleAppNavigation} 
+            selectedUnitId={selectedTenantData}
+          />
+        )}
         {currentPage === 'notifications' && (
           <Notifications onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
         )}
@@ -217,7 +258,6 @@ function App() {
             editData={selectedProfile} 
           />
         )}
-        
         {currentPage === 'documentViewer' && (
           <DocumentViewer 
             onBack={() => setCurrentPage('adminProfile')} 
@@ -230,8 +270,7 @@ function App() {
             onNavigate={handleAppNavigation} 
           />
         )}
-
-        <Side 
+        <SideMenuDrawer 
           isOpen={isMenuOpen} 
           onClose={() => setIsMenuOpen(false)} 
           onNavigate={handleAppNavigation} 
