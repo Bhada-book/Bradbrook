@@ -19,9 +19,10 @@ export default function Side({ isOpen, onClose, onNavigate }) {
           <li onClick={() => { onNavigate('profile'); onClose(); }}>
             <FaUser /> Profile
           </li>
-         <li onClick={() => { onNavigate('history'); onClose(); }}>
-  <FaHistory /> History
-</li>
+          <li onClick={() => { onNavigate('history'); onClose(); }}>
+            <FaHistory /> History
+          </li>
+
         
           <li 
             className="logout-item" 

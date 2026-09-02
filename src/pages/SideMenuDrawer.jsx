@@ -13,7 +13,7 @@ export default function SideMenuDrawer({ isOpen, onClose, onNavigate }) {
     { name: 'Tenant History', page: 'history'},
     { name: 'Tenant List', page: 'tenantList' },
     { name: 'Unit Ledger / Payments', page: 'unit-ledger' },
-    { name: 'Overdue Details', page: 'overdue' },
+  
   ];
 
   // If the user is an Admin/Landlord or Manager, include administrative options

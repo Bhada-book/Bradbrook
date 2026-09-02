@@ -16,7 +16,7 @@ import AdminProfile from './pages/AdminProfile';
 import AdminDetail from './pages/AdminDetail';
 import AddManager from './pages/AddManager';
 import AddCollector from './pages/AddCollector';
-import Overdue from './pages/Overdue';
+import Overdue from './pages/Tenant/Overdue';
 import DocumentViewer from './pages/DocumentViewer';
 import AdminApprovalNotifications from './pages/AdminApprovalNotifications';
 import Side from './pages/Tenant/Side';
@@ -121,6 +121,13 @@ function App() {
           tenantIdProp={loggedInTenantId}
         />
       )}
+      {currentPage === 'overdue' && (
+          <Overdue 
+            onBack={() => setCurrentPage('home')} 
+            onNavigate={handleAppNavigation} 
+            selectedUnitId={loggedInTenantId} 
+          />
+        )}
 
           {/* Correct Side Drawer Component for Tenant */}
           <Side 
@@ -144,6 +151,7 @@ function App() {
         {currentPage === 'navbar' && (
           <Navbar onBack={() => setCurrentPage ('navbar')} onNavigate={handleAppNavigation} />
         )}
+      
         {currentPage === 'property' && (
           <PropertyDetails onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
         )}
@@ -209,9 +217,7 @@ function App() {
             editData={selectedProfile} 
           />
         )}
-        {currentPage === 'overdue' && (
-          <Overdue onBack={() => setCurrentPage('home')} onNavigate={handleAppNavigation} />
-        )}
+        
         {currentPage === 'documentViewer' && (
           <DocumentViewer 
             onBack={() => setCurrentPage('adminProfile')} 

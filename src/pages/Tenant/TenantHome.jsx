@@ -219,6 +219,30 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
       setIsSubmitting(false);
     }
   };
+  // Helper function to calculate if payment is overdue after the 30th
+  const getComputedPaymentStatus = () => {
+    // Check if any approved payment exists for the current month/year
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYearNum = currentDate.getFullYear().toString();
+    const currentDay = currentDate.getDate();
+
+    const hasPaidThisMonth = ledgerData.some(item => {
+      if (!item.date || item.status !== 'Approved') return false;
+      const itemDate = new Date(item.date);
+      return itemDate.getMonth() === currentMonth && itemDate.getFullYear().toString() === currentYearNum;
+    });
+
+    // If past the 30th and payment not done for current month -> Overdue
+    if (currentDay > 30 && !hasPaidThisMonth && selectedYear === currentYearNum) {
+      return 'overdue';
+    }
+
+    return 'paid';
+  };
+
+  const currentPaymentStatus = getComputedPaymentStatus();
+  const isOverdue = currentPaymentStatus === 'overdue';
 
   return (
     <div className="tenant-container">
@@ -298,7 +322,7 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
             </div>
           </div>
 
-          <div className="summary-cards-grid1">
+         <div className="summary-cards-grid1">
             <div className="summary-card1">
               <span className="card-label1">Rs.</span>
               <h3>{formattedReceived}</h3>
@@ -306,7 +330,7 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
             </div>
             <div className="summary-card1">
               <span className="card-label1">Rs.</span>
-              <h3>00,00,000/-</h3>
+              <h3>{isOverdue ? (tenantData.totalMonthlyRental || tenantData.finalMonthlyRental || '10,000') + '/-' : '00,00,000/-'}</h3>
               <p className="status-red">● Overdue</p>
             </div>
             <div className="summary-card1">
@@ -318,9 +342,20 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
         </section>
 
         {/* Invoice Banner */}
-        <div className="invoice-banner">
-          <div className="invoice-info">
-            <span className="invoice-title">Invoice BB26270001 <span className="invoice-status">Overdue</span></span>
+       {/* Invoice Banner */}
+        <div className="invoice-banner" style={{ background: isOverdue ? '#ffe6e6' : '#e6f4ea', borderLeft: `5px solid ${isOverdue ? '#dc3545' : '#28a745'}` }}>
+          <div className="invoice-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <span className="invoice-title">
+              Invoice Current Month 
+              <span className="invoice-status" style={{ background: isOverdue ? '#dc3545' : '#28a745', color: '#fff', padding: '2px 8px', borderRadius: '4px', marginLeft: '8px', fontSize: '11px' }}>
+                {isOverdue ? 'Overdue' : 'Paid'}
+              </span>
+            </span>
+            {isOverdue && (
+              <span style={{ fontSize: '12px', color: '#dc3545', fontWeight: 'bold' }}>
+                Due since 30th
+              </span>
+            )}
           </div>
         </div>
 
