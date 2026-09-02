@@ -326,7 +326,7 @@ export default function TenantHome({ onNavigate, isMenuOpen, setIsMenuOpen, tena
             <div className="summary-card1">
               <span className="card-label1">Rs.</span>
               <h3>{formattedReceived}</h3>
-              <p className="status-green">● Received</p>
+              <p className="status-green">● Paid</p>
             </div>
             <div className="summary-card1">
               <span className="card-label1">Rs.</span>

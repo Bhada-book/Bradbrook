@@ -80,7 +80,8 @@ export default function PropertyDetails({ onBack, onNavigate }) {
     );
   });
 // Year-wise calculation logic
-const calculateYearlyTotals = () => {
+// Month-wise calculation logic
+const calculateMonthlyTotals = () => {
   let totalReceived = 0;
   let totalOverdue = 0;
   let totalPending = 0;
@@ -95,26 +96,25 @@ const calculateYearlyTotals = () => {
       String(t.propertyOrUnit || t.propertyUnit || '').trim().toLowerCase() === String(unit.propertyName || '').trim().toLowerCase()
     );
 
-    // Monthly rent (convert to number, default to 0)
-    const monthlyRent = parseFloat(unit.expectedMonthlyRental) || 0;
-    const yearlyRent = monthlyRent * 12; // Year-wise calculation
+    // Monthly rent (convert to number, default to 0) - Year *12 kaunvun mahinyacha amount direct ghetla ahe
+    const monthlyRent = parseFloat(unit.expectedMonthlyRental) || 0; 
 
     if (tenant) {
       const status = (tenant.paymentStatus || 'paid').toLowerCase();
       if (status === 'paid') {
-        totalReceived += yearlyRent;
+        totalReceived += monthlyRent;
       } else if (status === 'overdue') {
-        totalOverdue += yearlyRent;
+        totalOverdue += monthlyRent;
       } else {
-        totalPending += yearlyRent;
+        totalPending += monthlyRent;
       }
-    } else {
-      // Jar tenant nasel tar vacant property sathi expected rent pending/other madhe dharu shakta (optional)
     }
   });
 
   return { totalReceived, totalOverdue, totalPending };
 };
+
+const monthlySummary = calculateMonthlyTotals();
 
 const yearlySummary = calculateYearlyTotals();
   // Check if a property unit has an assigned tenant
@@ -190,21 +190,21 @@ const yearlySummary = calculateYearlyTotals();
             </div>
           </div>
 
-        <div className="summary-cards-grid">
+      <div className="summary-cards-grid">
   <div className="summary-card">
     <span className="card-label">Rs.</span>
-    <h3>{yearlySummary.totalReceived.toLocaleString('en-IN')}/-</h3>
-    <p className="status-green">● Received (Yearly)</p>
+    <h3>{monthlySummary.totalReceived.toLocaleString('en-IN')}/-</h3>
+    <p className="status-green">● Received</p>
   </div>
   <div className="summary-card">
     <span className="card-label">Rs.</span>
-    <h3>{yearlySummary.totalOverdue.toLocaleString('en-IN')}/-</h3>
-    <p className="status-red">● Overdue (Yearly)</p>
+    <h3>{monthlySummary.totalOverdue.toLocaleString('en-IN')}/-</h3>
+    <p className="status-red">● Overdue</p>
   </div>
   <div className="summary-card">
     <span className="card-label">Rs.</span>
-    <h3>{yearlySummary.totalPending.toLocaleString('en-IN')}/-</h3>
-    <p className="status-orange">● Old Pending (Yearly)</p>
+    <h3>{monthlySummary.totalPending.toLocaleString('en-IN')}/-</h3>
+    <p className="status-orange">● Old Pending</p>
   </div>
 </div>
 
